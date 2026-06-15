@@ -62,12 +62,12 @@ void rdtest_deinit(void) {
 }
 
 RDContext* rdtest_context_create(void) {
-    RDContextSlice slice = rd_test_data(RDTEST_BUFFER, RDTEST_BUFFER_SIZE);
+    RDTestResultSlice slice = rd_test_data(RDTEST_BUFFER, RDTEST_BUFFER_SIZE);
     if(rd_slice_is_empty(slice)) return NULL;
 
-    RDContext* ctx = rd_slice_at(slice, 0);
-    rd_accept(ctx, NULL, NULL);
-    return ctx;
+    RDAcceptParams params = {.mode = RD_AM_NEW};
+    RDAcceptResult res = rd_accept(rd_slice_at(slice, 0), &params);
+    return res.context; // NULL on failure
 }
 
 RDContext* rdtest_load_sample(const char* relpath, const char* loaderid,
@@ -79,34 +79,36 @@ RDContext* rdtest_load_sample(const char* relpath, const char* loaderid,
         g_context = NULL;
     }
 
-    RDContextSlice slice = rd_test(rd_format("%s/%s", g_samples_dir, relpath));
+    RDTestResultSlice slice =
+        rd_test(rd_format("%s/%s", g_samples_dir, relpath));
     if(rd_slice_is_empty(slice)) return NULL;
 
-    RDContext* ctx = rd_slice_at(slice, 0); // first = best match
-    rd_accept(ctx, NULL, NULL);
+    RDAcceptParams params = {.mode = RD_AM_NEW};
+    RDAcceptResult res = rd_accept(rd_slice_at(slice, 0), &params);
+    if(res.status != RD_ACCEPT_OK) return NULL;
 
-    const RDLoaderPlugin* loader = rd_get_loader_plugin(ctx);
+    const RDLoaderPlugin* loader = rd_get_loader_plugin(res.context);
     if(!loader || strcmp(loader->id, loaderid) != 0) {
         fprintf(stderr,
                 "  TEST FAIL loader mismatch: expected '%s', got '%s'\n",
                 loaderid, loader ? loader->id : "(null)");
-        rd_destroy(ctx);
+        rd_destroy(res.context);
         return NULL;
     }
 
-    const RDProcessorPlugin* processor = rd_get_processor_plugin(ctx);
+    const RDProcessorPlugin* processor = rd_get_processor_plugin(res.context);
     if(!processor || strcmp(processor->id, processorid) != 0) {
         fprintf(stderr,
                 "  TEST FAIL processor mismatch: expected '%s', got '%s'\n",
                 processorid, processor ? processor->id : "(null)");
-        rd_destroy(ctx);
+        rd_destroy(res.context);
         return NULL;
     }
 
-    rd_disassemble(ctx);
+    rd_disassemble(res.context);
 
-    g_context = ctx;
-    return ctx;
+    g_context = res.context;
+    return res.context;
 }
 
 int rdtest_check_names(RDContext* ctx, const RDTestName* names) {
