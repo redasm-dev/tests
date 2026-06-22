@@ -5,9 +5,29 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define RDTEST_PROJECT_FILE "project.rdx"
+
 static const char RDTEST_BUFFER[RDTEST_BUFFER_SIZE] = {0};
 static const char* g_samples_dir = NULL;
 static RDContext* g_context = NULL;
+
+static bool _rdtest_ext_matches(RDContext* ctx, const RDExternal* ext,
+                                const RDTestExternal* e) {
+    if(ext->kind != e->kind) return false;
+    if(ext->address != e->address) return false;
+
+    if(e->name) {
+        const char* name = rd_get_name(ctx, ext->address);
+        if(!name || strcmp(e->name, name) != 0) return false;
+    }
+
+    if(ext->ordinal.has_value != e->ordinal.has_value) return false;
+
+    if(e->ordinal.has_value && ext->ordinal.value != e->ordinal.value)
+        return false;
+
+    return true;
+}
 
 static void _rdtest_load_plugins() {
     char paths[] = REDASM_PLUGIN_PATHS;
@@ -38,6 +58,37 @@ static int _rdtest_check_graph(RDContext* ctx, RDAddress address,
                 address, expected_hash, hash);
         return RDTEST_FAIL;
     }
+
+    return RDTEST_PASS;
+}
+
+static int _rdtest_run(RDTestSample* sample) {
+    rdtest_assert_notnull(sample->ctx);
+
+    if(sample->entry_point.has_value) {
+        RDAddress ep;
+        rdtest_assert_true(rd_get_entry_point(sample->ctx, &ep));
+
+        if(ep != sample->entry_point.value) {
+            fprintf(stderr,
+                    "  TEST FAIL address mismatch: expected %" PRIx64
+                    ", got %" PRIx64 "\n",
+                    sample->entry_point.value, ep);
+
+            return RDTEST_FAIL;
+        }
+
+        const RDFunction* f =
+            rd_find_function(sample->ctx, sample->entry_point.value);
+        rdtest_assert_notnull(f);
+        rdtest_assert_eq(rd_function_is_noret(f), sample->entry_point.no_ret);
+    }
+
+    rdtest_assert_pass(rdtest_check_names(sample->ctx, sample->names));
+    rdtest_assert_pass(rdtest_check_types(sample->ctx, sample->types));
+    rdtest_assert_pass(rdtest_check_graphs(sample->ctx, sample->graphs));
+    rdtest_assert_pass(rdtest_check_xrefs(sample->ctx, sample->xrefs));
+    rdtest_assert_pass(rdtest_check_externals(sample->ctx, sample->externals));
 
     return RDTEST_PASS;
 }
@@ -105,9 +156,6 @@ RDContext* rdtest_load_sample(const char* relpath, const char* loaderid,
         return NULL;
     }
 
-    rd_disassemble(res.context);
-
-    g_context = res.context;
     return res.context;
 }
 
@@ -175,8 +223,9 @@ int rdtest_check_xrefs(RDContext* ctx, const RDTestXRef* xrefs) {
         RDXRefSlice slice = rd_get_xrefs_to(ctx, r->address, r->ref.type);
         bool found = false;
 
-        for(usize i = 0; i < slice.length; i++) {
-            if(slice.data[i].address == r->ref.address) {
+        const RDXRef* xref;
+        rd_slice_each(xref, slice) {
+            if(xref->address == r->ref.address) {
                 found = true;
                 break;
             }
@@ -196,34 +245,56 @@ int rdtest_check_xrefs(RDContext* ctx, const RDTestXRef* xrefs) {
     return RDTEST_PASS;
 }
 
-int rdtest_check_sample(RDTestSample* sample) {
-    sample->ctx = rdtest_load_sample(sample->rel_path, sample->loader_id,
-                                     sample->processor_id);
-    rdtest_assert_notnull(sample->ctx);
+int rdtest_check_externals(RDContext* ctx, const RDTestExternal* externals) {
+    if(!externals) return RDTEST_PASS;
 
-    if(sample->entry_point.has_value) {
-        RDAddress ep;
-        rdtest_assert_true(rd_get_entry_point(sample->ctx, &ep));
+    RDExternalSlice slice = rd_get_all_externals(ctx, RD_EXT_NONE);
+    const RDTestExternal* e = externals;
 
-        if(ep != sample->entry_point.value) {
-            fprintf(stderr,
-                    "  TEST FAIL address mismatch: expected %" PRIx64
-                    ", got %" PRIx64 "\n",
-                    sample->entry_point.value, ep);
+    while(e && e->kind != RD_EXT_NONE) {
+        bool found = false;
 
+        const RDExternal* ext;
+        rd_slice_each(ext, slice) {
+            if(_rdtest_ext_matches(ctx, ext, e)) {
+                found = true;
+                break;
+            }
+        }
+
+        if(!found) {
+            fprintf(stderr, "  TEST FAIL external mismatch: 0x%08" PRIx64 "\n",
+                    e->address);
             return RDTEST_FAIL;
         }
 
-        const RDFunction* f =
-            rd_find_function(sample->ctx, sample->entry_point.value);
-        rdtest_assert_notnull(f);
-        rdtest_assert_eq(rd_function_is_noret(f), sample->entry_point.no_ret);
+        e++;
     }
 
-    rdtest_assert_pass(rdtest_check_names(sample->ctx, sample->names));
-    rdtest_assert_pass(rdtest_check_types(sample->ctx, sample->types));
-    rdtest_assert_pass(rdtest_check_graphs(sample->ctx, sample->graphs));
-    rdtest_assert_pass(rdtest_check_xrefs(sample->ctx, sample->xrefs));
+    return RDTEST_PASS;
+}
+
+int rdtest_check_sample(RDTestSample* sample) {
+    sample->ctx = rdtest_load_sample(sample->rel_path, sample->loader_id,
+                                     sample->processor_id);
+    g_context = sample->ctx;
+    rd_disassemble(sample->ctx);
+    rdtest_assert_pass(_rdtest_run(sample));
+
+    // run again in project mode
+    bool ok = rd_project_save(sample->ctx, RDTEST_PROJECT_FILE);
+    rdtest_assert_true(ok);
+    rd_destroy(sample->ctx);
+    sample->ctx = NULL;
+    g_context = NULL;
+
+    RDAcceptResult res = rd_project_load(RDTEST_PROJECT_FILE, NULL);
+    rdtest_assert_eq(res.status, RD_ACCEPT_OK);
+    sample->ctx = res.context;
+    g_context = res.context;
+    remove(RDTEST_PROJECT_FILE);
+
+    rdtest_assert_pass(_rdtest_run(sample));
 
     return RDTEST_PASS;
 }

@@ -22,6 +22,17 @@ static int test_masm0(void) {
         {0},
     };
 
+    // clang-format off
+    static const RDTestExternal EXTERNALS[] = {
+        {.kind = RD_EXT_EXPORTED, .address = 0x00401000},
+        {.kind = RD_EXT_IMPORTED, .address = 0x00402000, .module = "KERNEL32.dll", .name = "__imp_GetModuleHandleA"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x00402004, .module = "KERNEL32.dll", .name = "__imp_ExitProcess"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x0040200c, .module = "user32.dll", .name = "__imp_EndDialog"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x00402010, .module = "user32.dll", .name = "__imp_DialogBoxParamA"},
+        {0},
+    };
+    // clang-format on
+
     RDTestSample s = {
         .rel_path = "mz/pe/Masm0.exe",
         .loader_id = "win_pe",
@@ -35,6 +46,7 @@ static int test_masm0(void) {
         .names = NAMES,
         .graphs = GRAPHS,
         .xrefs = XREFS,
+        .externals = EXTERNALS,
     };
 
     rdtest_assert_pass(rdtest_check_sample(&s));
@@ -104,6 +116,76 @@ static int test_cm01(void) {
         {0x401506, 0x644DFC7D}, {0x401512, 0xB24509EA}, {0},
     };
 
+    // clang-format off
+    static const RDTestExternal EXTERNALS[] = {
+        {.kind = RD_EXT_EXPORTED, .address = 0x00401000},
+        {.kind = RD_EXT_EXPORTED, .address = 0x00401128, .name = "WndProc"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x403184, .module = "USER32.dll", .name = "__imp_KillTimer"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x403188, .module = "USER32.dll", .name = "__imp_GetSystemMetrics"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x40318C, .module = "USER32.dll", .name = "__imp_LoadCursorA"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x403190, .module = "USER32.dll", .name = "__imp_LoadAcceleratorsA"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x403194, .module = "USER32.dll", .name = "__imp_MessageBeep"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x403198, .module = "USER32.dll", .name = "__imp_GetWindowRect"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x40319C, .module = "USER32.dll", .name = "__imp_LoadStringA"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x4031A0, .module = "USER32.dll", .name = "__imp_LoadIconA"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x4031A4, .module = "USER32.dll", .name = "__imp_LoadBitmapA"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x4031A8, .module = "USER32.dll", .name = "__imp_SetFocus"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x4031AC, .module = "USER32.dll", .name = "__imp_MessageBoxA"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x4031B0, .module = "USER32.dll", .name = "__imp_PostQuitMessage"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x4031B4, .module = "USER32.dll", .name = "__imp_WinHelpA"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x4031B8, .module = "USER32.dll", .name = "__imp_InvalidateRect"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x4031BC, .module = "USER32.dll", .name = "__imp_TranslateAcceleratorA"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x4031C0, .module = "USER32.dll", .name = "__imp_MoveWindow"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x4031C4, .module = "USER32.dll", .name = "__imp_TranslateMessage"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x4031C8, .module = "USER32.dll", .name = "__imp_LoadMenuA"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x4031CC, .module = "USER32.dll", .name = "__imp_ShowWindow"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x4031D0, .module = "USER32.dll", .name = "__imp_SendMessageA"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x4031D4, .module = "USER32.dll", .name = "__imp_SetTimer"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x4031D8, .module = "USER32.dll", .name = "__imp_SetWindowPos"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x4031DC, .module = "USER32.dll", .name = "__imp_UpdateWindow"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x4031E0, .module = "USER32.dll", .name = "__imp_RegisterClassA"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x4031E4, .module = "USER32.dll", .name = "__imp_BeginPaint"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x4031E8, .module = "USER32.dll", .name = "__imp_CreateWindowExA"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x4031EC, .module = "USER32.dll", .name = "__imp_DefWindowProcA"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x4031F0, .module = "USER32.dll", .name = "__imp_DialogBoxParamA"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x4031F4, .module = "USER32.dll", .name = "__imp_DispatchMessageA"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x4031F8, .module = "USER32.dll", .name = "__imp_DrawMenuBar"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x4031FC, .module = "USER32.dll", .name = "__imp_EndDialog"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x403200, .module = "USER32.dll", .name = "__imp_EndPaint"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x403204, .module = "USER32.dll", .name = "__imp_FindWindowA"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x403208, .module = "USER32.dll", .name = "__imp_GetDC"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x40320C, .module = "USER32.dll", .name = "__imp_GetDlgItem"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x403210, .module = "USER32.dll", .name = "__imp_GetDlgItemTextA"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x403214, .module = "USER32.dll", .name = "__imp_GetMessageA"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x40321C, .module = "KERNEL32.dll", .name = "__imp_GetLocalTime"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x403220, .module = "KERNEL32.dll", .name = "__imp_OpenFile"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x403224, .module = "KERNEL32.dll", .name = "__imp_GlobalFree"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x403228, .module = "KERNEL32.dll", .name = "__imp_GlobalAlloc"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x40322C, .module = "KERNEL32.dll", .name = "__imp_lstrlen"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x403230, .module = "KERNEL32.dll", .name = "__imp_CloseHandle"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x403234, .module = "KERNEL32.dll", .name = "__imp_WriteFile"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x403238, .module = "KERNEL32.dll", .name = "__imp_GetModuleHandleA"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x40323C, .module = "KERNEL32.dll", .name = "__imp_ReadFile"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x403240, .module = "KERNEL32.dll", .name = "__imp_ExitProcess"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x403248, .module = "COMCTL32.DLL", .name = "__imp_InitCommonControls"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x40324C, .module = "COMCTL32.DLL", .name = "__imp_CreateToolbarEx"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x403250, .module = "COMCTL32.DLL", .name = "__imp_CreateToolbar"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x403258, .module = "GDI32.dll", .name = "__imp_TextOutA"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x40325C, .module = "GDI32.dll", .name = "__imp_StartPage"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x403260, .module = "GDI32.dll", .name = "__imp_StartDocA"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x403264, .module = "GDI32.dll", .name = "__imp_GetTextMetricsA"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x403268, .module = "GDI32.dll", .name = "__imp_GetStockObject"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x40326C, .module = "GDI32.dll", .name = "__imp_EndPage"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x403270, .module = "GDI32.dll", .name = "__imp_EndDoc"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x403274, .module = "GDI32.dll", .name = "__imp_DeleteObject"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x403278, .module = "GDI32.dll", .name = "__imp_DeleteDC"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x403280, .module = "COMDLG32.dll", .name = "__imp_GetSaveFileNameA"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x403284, .module = "COMDLG32.dll", .name = "__imp_GetOpenFileNameA"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x403288, .module = "COMDLG32.dll", .name = "__imp_PrintDlgA"},
+        {0},
+    };
+    // clang-format on
+
     RDTestSample s = {
         .rel_path = "mz/pe/CM01.exe",
         .loader_id = "win_pe",
@@ -113,6 +195,7 @@ static int test_cm01(void) {
         .types = TYPES,
         .graphs = GRAPHS,
         .xrefs = XREFS,
+        .externals = EXTERNALS,
     };
 
     rdtest_assert_pass(rdtest_check_sample(&s));

@@ -24,6 +24,18 @@ typedef struct RDTestXRef {
     RDXRef ref;
 } RDTestXRef;
 
+typedef struct RDTestExternal {
+    RDExternalKind kind;
+    RDAddress address;
+    const char* module;
+    const char* name;
+
+    struct {
+        bool has_value;
+        u32 value;
+    } ordinal;
+} RDTestExternal;
+
 typedef struct RDTestSample {
     RDContext* ctx;
     const char* rel_path;
@@ -40,6 +52,7 @@ typedef struct RDTestSample {
     const RDTestType* types;
     const RDTestGraph* graphs;
     const RDTestXRef* xrefs;
+    const RDTestExternal* externals;
 } RDTestSample;
 
 void rdtest_init(int argc, char** argv);
@@ -51,4 +64,5 @@ int rdtest_check_names(RDContext* ctx, const RDTestName* names);
 int rdtest_check_types(RDContext* ctx, const RDTestType* types);
 int rdtest_check_graphs(RDContext* ctx, const RDTestGraph* graphs);
 int rdtest_check_xrefs(RDContext* ctx, const RDTestXRef* xrefs);
+int rdtest_check_externals(RDContext* ctx, const RDTestExternal* xrefs);
 int rdtest_check_sample(RDTestSample* sample);

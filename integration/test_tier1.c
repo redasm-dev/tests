@@ -44,6 +44,26 @@ static int test_helloworld32(void) {
         {0},
     };
 
+    // clang-format off
+    static const RDTestExternal EXTERNALS[] = {
+        {.kind = RD_EXT_EXPORTED, .address = 0x80482A8, .name = "_init"},
+        {.kind = RD_EXT_EXPORTED, .address = 0x8048310, .name = "_start"},
+        {.kind = RD_EXT_EXPORTED, .address = 0x8048340, .name = "__x86.get_pc_thunk.bx"},
+        {.kind = RD_EXT_EXPORTED, .address = 0x804840B, .name = "main"},
+        {.kind = RD_EXT_EXPORTED, .address = 0x8048440, .name = "__libc_csu_init"},
+        {.kind = RD_EXT_EXPORTED, .address = 0x80484A0, .name = "__libc_csu_fini"},
+        {.kind = RD_EXT_EXPORTED, .address = 0x80484A4, .name = "_fini"},
+        {.kind = RD_EXT_EXPORTED, .address = 0x80484B8, .name = "_fp_hw"},
+        {.kind = RD_EXT_EXPORTED, .address = 0x80484BC, .name = "_IO_stdin_used"},
+        {.kind = RD_EXT_EXPORTED, .address = 0x804A018, .name = "__dso_handle"},
+        {.kind = RD_EXT_EXPORTED, .address = 0x804A01C, .name = "__TMC_END__"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x8049FFC, .name = "__imp___gmon_start__"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x804A00C, .name = "__imp_puts"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x804A010, .name = "__imp___libc_start_main"},
+        {0},
+    };
+    // clang-format on
+
     RDTestSample s = {
         .rel_path = "elf/helloworld32",
         .loader_id = "elf",
@@ -52,7 +72,7 @@ static int test_helloworld32(void) {
         .names = NAMES,
         .types = TYPES,
         .graphs = GRAPHS,
-        .xrefs = XREFS,
+        .externals = EXTERNALS,
     };
 
     rdtest_assert_pass(rdtest_check_sample(&s));
@@ -88,6 +108,24 @@ static int test_helloworld64(void) {
         {0},
     };
 
+    // clang-format off
+    static const RDTestExternal EXTERNALS[] = {
+        {.kind = RD_EXT_EXPORTED, .address = 0x4003c8, .name = "_init"},
+        {.kind = RD_EXT_EXPORTED, .address = 0x400400, .name = "_start"},
+        {.kind = RD_EXT_EXPORTED, .address = 0x4004f6, .name = "main"},
+        {.kind = RD_EXT_EXPORTED, .address = 0x400510, .name = "__libc_csu_init"},
+        {.kind = RD_EXT_EXPORTED, .address = 0x400580, .name = "__libc_csu_fini"},
+        {.kind = RD_EXT_EXPORTED, .address = 0x400584, .name = "_fini"},
+        {.kind = RD_EXT_EXPORTED, .address = 0x400590, .name = "_IO_stdin_used"},
+        {.kind = RD_EXT_EXPORTED, .address = 0x601028, .name = "__dso_handle"},
+        {.kind = RD_EXT_EXPORTED, .address = 0x601030, .name = "__TMC_END__"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x600ff0, .name = "__imp___libc_start_main"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x600ff8, .name = "__imp___gmon_start__"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x601018, .name = "__imp_puts"},
+        {0},
+    };
+    // clang-format on
+
     RDTestSample s = {
         .rel_path = "elf/helloworld64",
         .loader_id = "elf",
@@ -97,6 +135,7 @@ static int test_helloworld64(void) {
         .types = TYPES,
         .graphs = GRAPHS,
         .xrefs = XREFS,
+        .externals = EXTERNALS,
     };
 
     rdtest_assert_pass(rdtest_check_sample(&s));
