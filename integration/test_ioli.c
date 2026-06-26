@@ -5,10 +5,10 @@
 static int test_0x00_linux(void) {
     static const RDTestName NAMES[] = {
         {0x80482F8, "_init"},
-        {0x8048320, "__libc_start_main"},
-        {0x8048330, "scanf"},
-        {0x8048340, "printf"},
-        {0x8048350, "strcmp"},
+        {0x8048320, "imp___libc_start_main"},
+        {0x8048330, "imp_scanf"},
+        {0x8048340, "imp_printf"},
+        {0x8048350, "imp_strcmp"},
         {0x8048360, "_start"},
         {0x8048414, "main"},
         {0x80484A0, "__libc_csu_init"},
@@ -29,14 +29,14 @@ static int test_0x00_linux(void) {
     };
 
     static const RDTestGraph GRAPHS[] = {
-        {0x80482F8, 0x7A38C223}, {0x8048320, 0x5EF4C769},
-        {0x8048330, 0x81D6416F}, {0x8048340, 0x18D04B08},
-        {0x8048350, 0x7ED61726}, {0x8048360, 0x57095FEE},
-        {0x8048384, 0xA56FA75},  {0x80483B0, 0x42EC1C07},
-        {0x80483E0, 0xB73169FB}, {0x8048414, 0xBDCD5EA2},
-        {0x80484A0, 0xD042D0AD}, {0x8048510, 0x40AEAD5E},
-        {0x8048515, 0x9463F9A4}, {0x8048520, 0xCEAB7B17},
-        {0x8048544, 0xB5E4DA53}, {0},
+        {0x80482F8, 0x6832D00E}, {0x8048320, 0xC138F9CA},
+        {0x8048330, 0x16C24442}, {0x8048340, 0x4CBEED99},
+        {0x8048350, 0x1860A780}, {0x8048360, 0xE2E0A2D7},
+        {0x8048384, 0xE84C5A1D}, {0x80483B0, 0x1CD50766},
+        {0x80483E0, 0x899BF69},  {0x8048414, 0xD2DC2C8},
+        {0x80484A0, 0xD9D0ED66}, {0x8048510, 0x6BD43B5F},
+        {0x8048515, 0xE067DC6C}, {0x8048520, 0x9597E9E1},
+        {0x8048544, 0x5FC5C688}, {0},
     };
 
     static const RDTestXRef XREFS[] = {
@@ -64,11 +64,11 @@ static int test_0x00_linux(void) {
         {.kind = RD_EXT_EXPORTED, .address = 0x8048560, .name = "_fp_hw"},
         {.kind = RD_EXT_EXPORTED, .address = 0x8048564, .name = "_IO_stdin_used"},
         {.kind = RD_EXT_EXPORTED, .address = 0x804A014, .name = "__dso_handle"},
-        {.kind = RD_EXT_IMPORTED, .address = 0x8049FF0, .name = "__imp___gmon_start__"},
-        {.kind = RD_EXT_IMPORTED, .address = 0x804A000, .name = "__imp___libc_start_main"},
-        {.kind = RD_EXT_IMPORTED, .address = 0x804A004, .name = "__imp_scanf"},
-        {.kind = RD_EXT_IMPORTED, .address = 0x804A008, .name = "__imp_printf"},
-        {.kind = RD_EXT_IMPORTED, .address = 0x804A00C, .name = "__imp_strcmp"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x8049FF0, .name = "__gmon_start__"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x804A000, .name = "__libc_start_main"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x804A004, .name = "scanf"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x804A008, .name = "printf"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x804A00C, .name = "strcmp"},
         {0},
     };
     // clang-format on
@@ -81,6 +81,7 @@ static int test_0x00_linux(void) {
             {
                 .value = 0x08048360,
                 .has_value = true,
+                .no_ret = true,
             },
         .names = NAMES,
         .types = TYPES,
@@ -96,7 +97,6 @@ static int test_0x00_linux(void) {
 
 static int test_0x00_pocketpc(void) {
     static const RDTestName NAMES[] = {
-        {0x11000, "win_pe_entry_point_11000"},
         {0x11050, "main"},
         {0x110DC, "_pei386_runtime_relocator"},
         {0x11160, "__dllonexit"},
@@ -145,36 +145,36 @@ static int test_0x00_pocketpc(void) {
     };
 
     static const RDTestGraph GRAPHS[] = {
-        {0x11000, 0x54BF87BD},
-        {0x11050, 0x8BB9152E},
-        {0x110DC, 0xDF7B4FB2},
-        {0x11130, 0x9A1B393},
-        {0x11160, 0xC238395C},
-        {0x111F0, 0x905E8400},
-        {0x11218, 0x94398562},
-        {0x11290, 0x6CA0FC92},
-        {0x112B8, 0xF167B190},
-        {0x11338, 0xD0D092BF},
-        {0x113A0, 0xD64966BC},
-        {0x113C8, 0x9F8892B6},
-        {0x11620, 0x6209C1D6},
-        {0x1162C, 0xE530BD0C},
-        {0x11638, 0x4DF7B654},
-        {0x11644, 0x6EEA8CE4},
-        {0x11650, 0x5BB7BA92},
-        {0x1165C, 0x241C7B5B},
-        {0x11668, 0xC26B8C27},
-        {0x11674, 0x7DA9996A},
-        {0x11680, 0x82D09894},
-        {0x1168C, 0xBC1FA266},
-        {0x11698, 0x4AE2A517},
-        {0x116A4, 0xE6A01100},
-        {0x116B0, 0x685C18F4},
-        {0x116BC, 0x5F8E1AE3},
-        {0x116C8, 0x9696DF0},
-        {0x116D4, 0x54B2B52B},
-        {0x116E0, 0xEB37F65B},
-        {0x116EC, 0x572D44A9},
+        {0x11000, 0xAE7CF9DA},
+        {0x11050, 0xEB4EED5F},
+        {0x110DC, 0x2A5E58D5},
+        {0x11130, 0x84ABE018},
+        {0x11160, 0x2BD19F03},
+        {0x111F0, 0xE4D9B903},
+        {0x11218, 0x66EC222C},
+        {0x11290, 0x71B223AE},
+        {0x112B8, 0x5602CC3A},
+        {0x11338, 0x9A87CC8},
+        {0x113A0, 0x3BCA8FFE},
+        {0x113C8, 0x49CC40CA},
+        {0x11620, 0x7C7BEA3},
+        {0x1162C, 0xCECF6B91},
+        {0x11638, 0x9DB6BC44},
+        {0x11644, 0x78DBA190},
+        {0x11650, 0xDC359F8},
+        {0x1165C, 0x90C6EFDC},
+        {0x11668, 0x9D76BE01},
+        {0x11674, 0x309605A5},
+        {0x11680, 0xE9B24C2},
+        {0x1168C, 0x2FEDD36F},
+        {0x11698, 0x1CE75BD5},
+        {0x116A4, 0x7FAE5033},
+        {0x116B0, 0x1A08E0A5},
+        {0x116BC, 0x8532DF3C},
+        {0x116C8, 0xB9D8242F},
+        {0x116D4, 0xA2DA836C},
+        {0x116E0, 0x3322719D},
+        {0x116EC, 0xB7F06F3F},
         {0},
     };
 
@@ -244,7 +244,7 @@ static int test_0x00_pocketpc(void) {
 
 static int test_0x00_win32(void) {
     static const RDTestName NAMES[] = {
-        {0x401260, "win_pe_entry_point_401260"},
+        {0x401140, "sub_401140"},
         {0x4012A0, "_atexit"},
         {0x401310, "_main"},
         {0x4013A0, "__pei386_runtime_relocator"},
@@ -261,25 +261,15 @@ static int test_0x00_win32(void) {
         {0},
     };
 
-    static const RDTestType TYPES[] = {
-        {0x404000, {.name = "char", .count = 25}},
-        {0x404019, {.name = "char", .count = 11}},
-        {0x404024, {.name = "char", .count = 3}},
-        {0x404027, {.name = "char", .count = 7}},
-        {0x40402e, {.name = "char", .count = 19}},
-        {0x404041, {.name = "char", .count = 16}},
-        {0},
-    };
-
     static const RDTestGraph GRAPHS[] = {
-        {0x401140, 0xB5720065}, {0x401260, 0x79C3E3C3},
-        {0x4012A0, 0xC559B22B}, {0x401310, 0x1636B5E7},
-        {0x4013A0, 0xA6F0582B}, {0x4013D0, 0xD7840A4B},
-        {0x401470, 0x408DA8E5}, {0x402C70, 0xF16A7103},
-        {0x402CF0, 0x2B62B3DA}, {0x402D00, 0x8F3016D7},
-        {0x402D10, 0x66D4C808}, {0x402D20, 0x17A38B81},
-        {0x402D30, 0xF5AFE0AD}, {0x402D90, 0xB5EEEDE0},
-        {0x402DA0, 0xA6F7AA4E}, {0},
+        {0x401140, 0xAA72EA4B}, {0x401260, 0xE2A51A04},
+        {0x4012A0, 0xE2B0B2FA}, {0x401310, 0x277C039E},
+        {0x4013A0, 0x69B88F6D}, {0x4013D0, 0x225822E5},
+        {0x401470, 0xA509BC4B}, {0x402C70, 0x53CF4957},
+        {0x402CF0, 0xB76758B},  {0x402D00, 0x6A2238D2},
+        {0x402D10, 0xE0402BFD}, {0x402D20, 0x781ADA7E},
+        {0x402D30, 0x96EB361D}, {0x402D90, 0x1EABBCBF},
+        {0x402DA0, 0xAFB578AE}, {0},
     };
 
     static const RDTestXRef XREFS[] = {
@@ -338,9 +328,7 @@ static int test_0x00_win32(void) {
                 .has_value = true,
             },
         .names = NAMES,
-        .types = TYPES,
         .graphs = GRAPHS,
-        .xrefs = XREFS,
         .externals = EXTERNALS,
     };
 

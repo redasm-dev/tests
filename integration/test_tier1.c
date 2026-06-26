@@ -5,9 +5,9 @@
 static int test_helloworld32(void) {
     static const RDTestName NAMES[] = {
         {0x80482A8, "_init"},
-        {0x80482E0, "puts"},
-        {0x80482F0, "__libc_start_main"},
-        {0x8048300, "__gmon_start__"},
+        {0x80482E0, "imp_puts"},
+        {0x80482F0, "imp___libc_start_main"},
+        {0x8048300, "imp___gmon_start__"},
         {0x8048310, "_start"},
         {0x8048340, "__x86.get_pc_thunk.bx"},
         {0x804840B, "main"},
@@ -23,16 +23,16 @@ static int test_helloworld32(void) {
     };
 
     static const RDTestGraph GRAPHS[] = {
-        {0x80482A8, 0xA1211E8C},
-        {0x80482E0, 0x8CCC50E9},
-        {0x80482F0, 0xF8A72C95},
-        {0x8048300, 0xE6C5DB74},
-        {0x8048310, 0x7CF9A20B},
-        {0x8048340, 0x7C39B4FC},
-        {0x804840B, 0xE7B27634},
-        {0x8048440, 0x50B6A6F0},
-        {0x80484A0, 0x84BBFBEF},
-        {0x80484A4, 0xF91B4142},
+        {0x80482A8, 0x7677BACF},
+        {0x80482E0, 0x52E4A590},
+        {0x80482F0, 0x52ACFB15},
+        {0x8048300, 0xDD75C1A3},
+        {0x8048310, 0x6904099B},
+        {0x8048340, 0x63E3DE89},
+        {0x804840B, 0xD55DC2EB},
+        {0x8048440, 0xCD801CAA},
+        {0x80484A0, 0x74B8D5F2},
+        {0x80484A4, 0x87783D3C},
         {0},
     };
 
@@ -57,9 +57,9 @@ static int test_helloworld32(void) {
         {.kind = RD_EXT_EXPORTED, .address = 0x80484BC, .name = "_IO_stdin_used"},
         {.kind = RD_EXT_EXPORTED, .address = 0x804A018, .name = "__dso_handle"},
         {.kind = RD_EXT_EXPORTED, .address = 0x804A01C, .name = "__TMC_END__"},
-        {.kind = RD_EXT_IMPORTED, .address = 0x8049FFC, .name = "__imp___gmon_start__"},
-        {.kind = RD_EXT_IMPORTED, .address = 0x804A00C, .name = "__imp_puts"},
-        {.kind = RD_EXT_IMPORTED, .address = 0x804A010, .name = "__imp___libc_start_main"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x8049FFC, .name = "__gmon_start__"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x804A00C, .name = "puts"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x804A010, .name = "__libc_start_main"},
         {0},
     };
     // clang-format on
@@ -68,7 +68,7 @@ static int test_helloworld32(void) {
         .rel_path = "elf/helloworld32",
         .loader_id = "elf",
         .processor_id = "x86_32",
-        .entry_point = {.value = 0x08048310, .has_value = true},
+        .entry_point = {.value = 0x08048310, .has_value = true, .no_ret = true},
         .names = NAMES,
         .types = TYPES,
         .graphs = GRAPHS,
@@ -82,7 +82,7 @@ static int test_helloworld32(void) {
 
 static int test_helloworld64(void) {
     static const RDTestName NAMES[] = {
-        {0x4003c8, "_init"},           {0x4003f0, "puts"},
+        {0x4003c8, "_init"},           {0x4003f0, "imp_puts"},
         {0x400400, "_start"},          {0x4004f6, "main"},
         {0x400510, "__libc_csu_init"}, {0x400580, "__libc_csu_fini"},
         {0x400584, "_fini"},           {0},
@@ -94,10 +94,10 @@ static int test_helloworld64(void) {
     };
 
     static const RDTestGraph GRAPHS[] = {
-        {0x4003C8, 0x20E870CF}, {0x4003F0, 0x6658DE17},
-        {0x400400, 0x5311FBAD}, {0x4004F6, 0xB2F4500C},
-        {0x400510, 0x671E91C5}, {0x400580, 0xE9DD3B5F},
-        {0x400584, 0xC24FE81F}, {0},
+        {0x4003C8, 0xF62B0F21}, {0x4003F0, 0x95C70395},
+        {0x400400, 0x13922C05}, {0x4004F6, 0x27987150},
+        {0x400510, 0x42DAEA43}, {0x400580, 0x98A4E5},
+        {0x400584, 0xB5FD9D9B}, {0},
     };
 
     static const RDTestXRef XREFS[] = {
@@ -119,9 +119,9 @@ static int test_helloworld64(void) {
         {.kind = RD_EXT_EXPORTED, .address = 0x400590, .name = "_IO_stdin_used"},
         {.kind = RD_EXT_EXPORTED, .address = 0x601028, .name = "__dso_handle"},
         {.kind = RD_EXT_EXPORTED, .address = 0x601030, .name = "__TMC_END__"},
-        {.kind = RD_EXT_IMPORTED, .address = 0x600ff0, .name = "__imp___libc_start_main"},
-        {.kind = RD_EXT_IMPORTED, .address = 0x600ff8, .name = "__imp___gmon_start__"},
-        {.kind = RD_EXT_IMPORTED, .address = 0x601018, .name = "__imp_puts"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x600ff0, .name = "__libc_start_main"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x600ff8, .name = "__gmon_start__"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x601018, .name = "puts"},
         {0},
     };
     // clang-format on
@@ -130,7 +130,7 @@ static int test_helloworld64(void) {
         .rel_path = "elf/helloworld64",
         .loader_id = "elf",
         .processor_id = "x86_64",
-        .entry_point = {.value = 0x400400, .has_value = true},
+        .entry_point = {.value = 0x400400, .has_value = true, .no_ret = true},
         .names = NAMES,
         .types = TYPES,
         .graphs = GRAPHS,

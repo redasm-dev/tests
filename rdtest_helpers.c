@@ -295,6 +295,5 @@ int rdtest_check_sample(RDTestSample* sample) {
     remove(RDTEST_PROJECT_FILE);
 
     rdtest_assert_pass(_rdtest_run(sample));
-
     return RDTEST_PASS;
 }
