@@ -7,7 +7,7 @@ endif()
 
 # Collect all plugin paths into a semicolon-separated list
 set(REDASM_PLUGIN_PATH_LIST "")
-foreach(type loaders processors commands)
+foreach(type loaders processors analyzers commands)
     get_property(subdirs DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../${type}" PROPERTY SUBDIRECTORIES)
     foreach(subdir ${subdirs})
         get_property(targets DIRECTORY ${subdir} PROPERTY BUILDSYSTEM_TARGETS)
