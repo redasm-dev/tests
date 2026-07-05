@@ -46,6 +46,13 @@ rd_add_test(test_memory unit/test_memory.c)
 add_test(NAME utils COMMAND test_utils)
 add_test(NAME memory COMMAND test_memory)
 
+# encoding
+rd_add_test(test_encoding_x86 encoding/test_x86.c)
+
+add_test(NAME test_encoding_x86 COMMAND test_encoding_x86)
+
+set_tests_properties(test_encoding_x86 PROPERTIES DEPENDS "memory utils")
+
 # integrations
 rd_add_test(test_tier0 integration/test_tier0.c)
 rd_add_test(test_tier1 integration/test_tier1.c)
