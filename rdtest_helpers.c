@@ -181,24 +181,32 @@ int rdtest_check_names(RDContext* ctx, const RDTestName* names) {
 }
 
 int rdtest_check_types(RDContext* ctx, const RDTestType* types) {
-    const RDTestType* t = types;
+    const RDTestType* tt = types;
 
-    while(t && !rd_type_is_void(&t->type)) {
+    while(tt && tt->name) {
         RDType currt;
 
-        if(!rd_get_type(ctx, t->address, &currt)) {
+        if(!rd_get_type(ctx, tt->address, &currt)) {
             fprintf(stderr, "  TEST FAIL no type at 0x%08" PRIx64 "\n",
-                    t->address);
+                    tt->address);
             return RDTEST_FAIL;
         }
 
-        if(!rd_type_equals(&currt, &t->type)) {
+        RDType t;
+        if(!rd_type_init(&t, tt->name, tt->count, tt->mod, ctx)) {
+            fprintf(stderr,
+                    "  TEST FAIL type creation failed at 0x%08" PRIx64 "\n",
+                    tt->address);
+            return RDTEST_FAIL;
+        }
+
+        if(!rd_type_equals(&currt, &t)) {
             fprintf(stderr, "  TEST FAIL type mismatch at 0x%08" PRIx64 "\n",
-                    t->address);
+                    tt->address);
             return RDTEST_FAIL;
         }
 
-        t++;
+        tt++;
     }
 
     return RDTEST_PASS;

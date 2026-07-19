@@ -16,7 +16,9 @@ typedef struct RDTestName {
 
 typedef struct RDTestType {
     RDAddress address;
-    RDType type;
+    const char* name;
+    usize count;
+    RDTypeModifier mod;
 } RDTestType;
 
 typedef struct RDTestXRef {

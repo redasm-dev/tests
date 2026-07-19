@@ -18,7 +18,7 @@ static int test_helloworld32(void) {
     };
 
     static const RDTestType TYPES[] = {
-        {0x080484c0, {.name = "char", .count = 12}},
+        {0x080484c0, .name = "char", .count = 12},
         {0},
     };
 
@@ -89,7 +89,7 @@ static int test_helloworld64(void) {
     };
 
     static const RDTestType TYPES[] = {
-        {0x400594, {.name = "char", .count = 12}},
+        {0x400594, .name = "char", .count = 12},
         {0},
     };
 

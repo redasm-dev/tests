@@ -3,17 +3,17 @@
 
 // --- rd_format ---
 static int test_format_basic(void) {
-    rdtest_assert_str(rd_format("hello"), "hello");
+    rdtest_assert_streq(rd_format("hello"), "hello");
     return RDTEST_PASS;
 }
 
 static int test_format_string_arg(void) {
-    rdtest_assert_str(rd_format("%s", "world"), "world");
+    rdtest_assert_streq(rd_format("%s", "world"), "world");
     return RDTEST_PASS;
 }
 
 static int test_format_multiple_args(void) {
-    rdtest_assert_str(rd_format("%s_%d", "test", 42), "test_42");
+    rdtest_assert_streq(rd_format("%s_%d", "test", 42), "test_42");
     return RDTEST_PASS;
 }
 
@@ -22,25 +22,25 @@ static int test_format_multiple_args(void) {
 static int test_format_shared_buffer(void) {
     const char* a = rd_format("hello");
     const char* b = rd_format("world");
-    rdtest_assert_str(a, "world"); // a and b point to the same buffer
-    rdtest_assert_str(b, "world");
+    rdtest_assert_streq(a, "world"); // a and b point to the same buffer
+    rdtest_assert_streq(b, "world");
     return RDTEST_PASS;
 }
 
 // --- rd_to_hex ---
 
 static int test_to_hex_zero(void) {
-    rdtest_assert_str(rd_to_hex(0), "0");
+    rdtest_assert_streq(rd_to_hex(0), "0");
     return RDTEST_PASS;
 }
 
 static int test_to_hex_byte(void) {
-    rdtest_assert_str(rd_to_hex(0xFF), "ff");
+    rdtest_assert_streq(rd_to_hex(0xFF), "ff");
     return RDTEST_PASS;
 }
 
 static int test_to_hex_word(void) {
-    rdtest_assert_str(rd_to_hex(0x1234), "1234");
+    rdtest_assert_streq(rd_to_hex(0x1234), "1234");
     return RDTEST_PASS;
 }
 
@@ -54,17 +54,17 @@ static int test_to_hex_no_prefix(void) {
 // --- rd_to_dec ---
 
 static int test_to_dec_zero(void) {
-    rdtest_assert_str(rd_to_dec(0), "0");
+    rdtest_assert_streq(rd_to_dec(0), "0");
     return RDTEST_PASS;
 }
 
 static int test_to_dec_positive(void) {
-    rdtest_assert_str(rd_to_dec(42), "42");
+    rdtest_assert_streq(rd_to_dec(42), "42");
     return RDTEST_PASS;
 }
 
 static int test_to_dec_large(void) {
-    rdtest_assert_str(rd_to_dec(1000000), "1000000");
+    rdtest_assert_streq(rd_to_dec(1000000), "1000000");
     return RDTEST_PASS;
 }
 

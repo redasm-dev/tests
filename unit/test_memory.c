@@ -4,7 +4,6 @@
 // --- roundtrip LE ---
 static int test_roundtrip_u8(void) {
     RDContext* ctx = rdtest_context_create();
-    rdtest_assert(ctx, "failed to create test context");
 
     rdtest_assert(rd_write_byte(ctx, 0x0, 0xAB), "write failed");
     u8 v;

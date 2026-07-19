@@ -79,16 +79,16 @@ static int test_cm01(void) {
     };
 
     static const RDTestType TYPES[] = {
-        {0x004020d6, {.name = "char", .count = 17}},
-        {0x004020e7, {.name = "char", .count = 13}},
-        {0x004020f4, {.name = "char", .count = 28}},
-        {0x00402110, {.name = "char", .count = 5}},
-        {0x00402115, {.name = "char", .count = 10}},
-        {0x0040211f, {.name = "char", .count = 10}},
-        {0x00402129, {.name = "char", .count = 11}},
-        {0x00402134, {.name = "char", .count = 44}},
-        {0x00402160, {.name = "char", .count = 9}},
-        {0x00402169, {.name = "char", .count = 21}},
+        {0x004020d6, .name = "char", .count = 17},
+        {0x004020e7, .name = "char", .count = 13},
+        {0x004020f4, .name = "char", .count = 28},
+        {0x00402110, .name = "char", .count = 5},
+        {0x00402115, .name = "char", .count = 10},
+        {0x0040211f, .name = "char", .count = 10},
+        {0x00402129, .name = "char", .count = 11},
+        {0x00402134, .name = "char", .count = 44},
+        {0x00402160, .name = "char", .count = 9},
+        {0x00402169, .name = "char", .count = 21},
         {0},
     };
 
@@ -262,7 +262,7 @@ static int test_testfwd(void) {
 
 static int test_com_hello(void) {
     static const RDTestType TYPES[] = {
-        {0x108, {.name = "char", .count = 15}},
+        {0x108, .name = "char", .count = 15},
         {0},
     };
 

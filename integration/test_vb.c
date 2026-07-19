@@ -23,11 +23,11 @@ static int test_vb5crkme(void) {
     };
 
     static const RDTestType TYPES[] = {
-        {0x40172c, {.name = "PE_VB_HEADER"}},
-        {0x401eb8, {.name = "char16", .count = 29}},
-        {0x401ef8, {.name = "char16", .count = 6}},
-        {0x401f08, {.name = "char16", .count = 27}},
-        {0x401f44, {.name = "char16", .count = 10}},
+        {0x40172c, .name = "VB_HEADER"},
+        {0x401eb8, .name = "char16", .count = 29},
+        {0x401ef8, .name = "char16", .count = 6},
+        {0x401f08, .name = "char16", .count = 27},
+        {0x401f44, .name = "char16", .count = 10},
         {0},
     };
 
@@ -147,12 +147,12 @@ static int test_newbies12(void) {
     };
 
     static const RDTestType TYPES[] = {
-        {0x401aa8, {.name = "PE_VB_HEADER"}},
-        {0x402ad8, {.name = "char16", .count = 31}},
-        {0x402b1c, {.name = "char16", .count = 5}},
-        {0x402b2c, {.name = "char16", .count = 29}},
-        {0x402b78, {.name = "char16", .count = 53}},
-        {0x402be8, {.name = "char16", .count = 9}},
+        {0x401aa8, .name = "VB_HEADER"},
+        {0x402ad8, .name = "char16", .count = 31},
+        {0x402b1c, .name = "char16", .count = 5},
+        {0x402b2c, .name = "char16", .count = 29},
+        {0x402b78, .name = "char16", .count = 53},
+        {0x402be8, .name = "char16", .count = 9},
         {0},
     };
 

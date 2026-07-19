@@ -42,16 +42,18 @@ endmacro()
 # units
 rd_add_test(test_utils unit/test_utils.c)
 rd_add_test(test_memory unit/test_memory.c)
+rd_add_test(test_types unit/test_types.c)
 
 add_test(NAME utils COMMAND test_utils)
 add_test(NAME memory COMMAND test_memory)
+add_test(NAME types COMMAND test_types)
 
 # encoding
 rd_add_test(test_encoding_x86 encoding/test_x86.c)
 
-add_test(NAME test_encoding_x86 COMMAND test_encoding_x86)
+add_test(NAME encoding_x86 COMMAND test_encoding_x86)
 
-set_tests_properties(test_encoding_x86 PROPERTIES DEPENDS "memory utils")
+set_tests_properties(encoding_x86 PROPERTIES DEPENDS "memory utils")
 
 # integrations
 rd_add_test(test_tier0 integration/test_tier0.c)
@@ -64,7 +66,7 @@ add_test(NAME tier1 COMMAND test_tier1 --samples "${REDASM_SAMPLES}")
 add_test(NAME vb COMMAND test_vb --samples "${REDASM_SAMPLES}")
 add_test(NAME ioli COMMAND test_ioli --samples "${REDASM_SAMPLES}")
 
-set_tests_properties(tier0 PROPERTIES DEPENDS "memory utils")
+set_tests_properties(tier0 PROPERTIES DEPENDS "memory utils types")
 set_tests_properties(tier1 PROPERTIES DEPENDS "tier0")
 set_tests_properties(vb PROPERTIES DEPENDS "tier1")
 set_tests_properties(ioli PROPERTIES DEPENDS "vb")

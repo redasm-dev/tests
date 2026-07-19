@@ -28,7 +28,7 @@ typedef struct {
 #define rdtest_assert_false(a) rdtest_assert(!(a), #a " is not FALSE")
 #define rdtest_assert_null(a) rdtest_assert((a) == NULL, #a " is not NULL")
 #define rdtest_assert_notnull(a) rdtest_assert((a) != NULL, #a " is NULL")
-#define rdtest_assert_str(a, b) rdtest_assert((a) && (b) && !strcmp((a), (b)), #a " != " #b)
+#define rdtest_assert_streq(a, b) rdtest_assert((a) && (b) && !strcmp((a), (b)), #a " != " #b)
 #define rdtest_assert_pass(a) rdtest_assert_eq((a), RDTEST_PASS)
 // clang-format on
 

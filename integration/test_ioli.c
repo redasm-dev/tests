@@ -19,12 +19,12 @@ static int test_0x00_linux(void) {
     };
 
     static const RDTestType TYPES[] = {
-        {0x8048568, {.name = "char", .count = 25}},
-        {0x8048581, {.name = "char", .count = 11}},
-        {0x804858c, {.name = "char", .count = 3}},
-        {0x804858f, {.name = "char", .count = 7}},
-        {0x8048596, {.name = "char", .count = 19}},
-        {0x80485a9, {.name = "char", .count = 16}},
+        {0x8048568, .name = "char", .count = 25},
+        {0x8048581, .name = "char", .count = 11},
+        {0x804858c, .name = "char", .count = 3},
+        {0x804858f, .name = "char", .count = 7},
+        {0x8048596, .name = "char", .count = 19},
+        {0x80485a9, .name = "char", .count = 16},
         {0},
     };
 
@@ -129,18 +129,18 @@ static int test_0x00_pocketpc(void) {
     };
 
     static const RDTestType TYPES[] = {
-        {0x13000, {.name = "char", .count = 24}},
-        {0x13018, {.name = "char", .count = 11}},
-        {0x13024, {.name = "char", .count = 3}},
-        {0x13028, {.name = "char", .count = 7}},
-        {0x13030, {.name = "char", .count = 18}},
-        {0x13044, {.name = "char", .count = 15}},
-        {0x110c4, {.name = "u32", .mod = RD_TYPE_PTR}},
-        {0x110c8, {.name = "u32", .mod = RD_TYPE_PTR}},
-        {0x110cc, {.name = "u32", .mod = RD_TYPE_PTR}},
-        {0x110d0, {.name = "u32", .mod = RD_TYPE_PTR}},
-        {0x110d4, {.name = "u32", .mod = RD_TYPE_PTR}},
-        {0x110d8, {.name = "u32", .mod = RD_TYPE_PTR}},
+        {0x13000, .name = "char", .count = 24},
+        {0x13018, .name = "char", .count = 11},
+        {0x13024, .name = "char", .count = 3},
+        {0x13028, .name = "char", .count = 7},
+        {0x13030, .name = "char", .count = 18},
+        {0x13044, .name = "char", .count = 15},
+        {0x110c4, .name = "u32", .mod = RD_TYPE_PTR},
+        {0x110c8, .name = "u32", .mod = RD_TYPE_PTR},
+        {0x110cc, .name = "u32", .mod = RD_TYPE_PTR},
+        {0x110d0, .name = "u32", .mod = RD_TYPE_PTR},
+        {0x110d4, .name = "u32", .mod = RD_TYPE_PTR},
+        {0x110d8, .name = "u32", .mod = RD_TYPE_PTR},
         {0},
     };
 
