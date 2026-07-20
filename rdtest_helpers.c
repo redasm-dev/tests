@@ -1,6 +1,7 @@
 #include "rdtest_helpers.h"
 #include "rdtest.h"
 #include <inttypes.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -89,6 +90,20 @@ static int _rdtest_run(RDTestSample* sample) {
     rdtest_assert_pass(rdtest_check_graphs(sample->ctx, sample->graphs));
     rdtest_assert_pass(rdtest_check_xrefs(sample->ctx, sample->xrefs));
     rdtest_assert_pass(rdtest_check_externals(sample->ctx, sample->externals));
+
+    RDAddressSpace aspace = rd_get_address_space(sample->ctx);
+    rdtest_assert_ne(aspace.start, aspace.end);
+    rdtest_assert_true(aspace.size > 0);
+
+    if(!sample->skip_rendering) {
+        RDSurface* s = rd_surface_create(sample->ctx, RD_RF_DEFAULT);
+        rdtest_assert_notnull(s);
+
+        rd_surface_set_max_rows(s, SIZE_MAX); // render everything
+        rdtest_assert_true(rd_surface_jump_to(s, aspace.start));
+
+        rd_surface_destroy(s);
+    }
 
     return RDTEST_PASS;
 }

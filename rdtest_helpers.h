@@ -44,6 +44,8 @@ typedef struct RDTestSample {
     const char* loader_id;
     const char* processor_id;
 
+    bool skip_rendering;
+
     struct {
         RDAddress value;
         bool has_value;
