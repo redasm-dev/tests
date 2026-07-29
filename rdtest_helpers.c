@@ -216,8 +216,14 @@ int rdtest_check_types(RDContext* ctx, const RDTestType* types) {
         }
 
         if(!rd_type_equals(&currt, &t)) {
-            fprintf(stderr, "  TEST FAIL type mismatch at 0x%08" PRIx64 "\n",
-                    tt->address);
+            char* currt_str = rd_strdup(rd_type_to_str(&currt, ctx));
+
+            fprintf(stderr,
+                    "  TEST FAIL type mismatch at 0x%08" PRIx64
+                    " (expected '%s', got '%s')\n",
+                    tt->address, rd_type_to_str(&t, ctx), currt_str);
+
+            rd_free(currt_str);
             return RDTEST_FAIL;
         }
 
@@ -304,6 +310,11 @@ int rdtest_check_sample(RDTestSample* sample) {
     rd_disassemble(sample->ctx);
     rdtest_assert_pass(_rdtest_run(sample));
 
+    // immediate re-analysis shouldn't mutate anything
+    rdtest_assert_true(rd_reanalyze(sample->ctx));
+    rd_disassemble(sample->ctx);
+    rdtest_assert_pass(_rdtest_run(sample));
+
     // run again in project mode
     bool ok = rd_project_save(sample->ctx, RDTEST_PROJECT_FILE);
     rdtest_assert_true(ok);
@@ -318,5 +329,11 @@ int rdtest_check_sample(RDTestSample* sample) {
     remove(RDTEST_PROJECT_FILE);
 
     rdtest_assert_pass(_rdtest_run(sample));
+
+    // re-analysis after project load shouldn't mutate anything
+    rdtest_assert_true(rd_reanalyze(sample->ctx));
+    rd_disassemble(sample->ctx);
+    rdtest_assert_pass(_rdtest_run(sample));
+
     return RDTEST_PASS;
 }
