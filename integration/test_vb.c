@@ -119,6 +119,7 @@ static int test_vb5crkme(void) {
         .graphs = GRAPHS,
         .xrefs = XREFS,
         .externals = EXTERNALS,
+        .n_functions = 16,
     };
 
     rdtest_assert_pass(rdtest_check_sample(&s));
@@ -264,6 +265,7 @@ static int test_newbies12(void) {
         .graphs = GRAPHS,
         .xrefs = XREFS,
         .externals = EXTERNALS,
+        .n_functions = 16,
     };
 
     rdtest_assert_pass(rdtest_check_sample(&s));

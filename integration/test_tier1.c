@@ -73,6 +73,7 @@ static int test_helloworld32(void) {
         .types = TYPES,
         .graphs = GRAPHS,
         .externals = EXTERNALS,
+        .n_functions = 10,
     };
 
     rdtest_assert_pass(rdtest_check_sample(&s));
@@ -136,6 +137,7 @@ static int test_helloworld64(void) {
         .graphs = GRAPHS,
         .xrefs = XREFS,
         .externals = EXTERNALS,
+        .n_functions = 7,
     };
 
     rdtest_assert_pass(rdtest_check_sample(&s));

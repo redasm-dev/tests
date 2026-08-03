@@ -47,6 +47,7 @@ static int test_masm0(void) {
         .graphs = GRAPHS,
         .xrefs = XREFS,
         .externals = EXTERNALS,
+        .n_functions = 5,
     };
 
     rdtest_assert_pass(rdtest_check_sample(&s));
@@ -206,6 +207,7 @@ static int test_cm01(void) {
         .graphs = GRAPHS,
         .xrefs = XREFS,
         .externals = EXTERNALS,
+        .n_functions = 26,
     };
 
     rdtest_assert_pass(rdtest_check_sample(&s));
@@ -253,6 +255,7 @@ static int test_testfwd(void) {
         .graphs = GRAPHS,
         .xrefs = XREFS,
         .externals = EXTERNALS,
+        .n_functions = 3,
     };
 
     rdtest_assert_pass(rdtest_check_sample(&s));
@@ -284,6 +287,7 @@ static int test_com_hello(void) {
         .types = TYPES,
         .graphs = GRAPHS,
         .xrefs = XREFS,
+        .n_functions = 1,
     };
 
     rdtest_assert_pass(rdtest_check_sample(&s));

@@ -85,6 +85,11 @@ static int _rdtest_run(RDTestSample* sample) {
         rdtest_assert_eq(rd_function_is_noret(f), sample->entry_point.no_ret);
     }
 
+    RDFunctionSlice functions = rd_get_all_functions(sample->ctx);
+    RDAddressSlice f_addresses = rd_get_all_functions_address(sample->ctx);
+    rdtest_assert_eq(rd_slice_length(functions), rd_slice_length(f_addresses));
+    rdtest_assert_eq(rd_slice_length(f_addresses), sample->n_functions);
+
     rdtest_assert_pass(rdtest_check_names(sample->ctx, sample->names));
     rdtest_assert_pass(rdtest_check_types(sample->ctx, sample->types));
     rdtest_assert_pass(rdtest_check_graphs(sample->ctx, sample->graphs));

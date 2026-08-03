@@ -44,6 +44,7 @@ typedef struct RDTestSample {
     const char* loader_id;
     const char* processor_id;
 
+    usize n_functions;
     bool skip_rendering;
 
     struct {

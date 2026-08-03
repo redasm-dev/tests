@@ -88,6 +88,7 @@ static int test_0x00_linux(void) {
         .graphs = GRAPHS,
         .xrefs = XREFS,
         .externals = EXTERNALS,
+        .n_functions = 15,
     };
 
     rdtest_assert_pass(rdtest_check_sample(&s));
@@ -235,6 +236,7 @@ static int test_0x00_pocketpc(void) {
         .graphs = GRAPHS,
         .xrefs = XREFS,
         .externals = EXTERNALS,
+        .n_functions = 30,
     };
 
     rdtest_assert_pass(rdtest_check_sample(&s));
@@ -322,14 +324,11 @@ static int test_0x00_win32(void) {
         .rel_path = "ioli/win32/crackme0x00.exe",
         .loader_id = "win_pe",
         .processor_id = "x86_32",
-        .entry_point =
-            {
-                .value = 0x401260,
-                .has_value = true,
-            },
+        .entry_point = {.value = 0x401260, .has_value = true},
         .names = NAMES,
         .graphs = GRAPHS,
         .externals = EXTERNALS,
+        .n_functions = 15,
     };
 
     rdtest_assert_pass(rdtest_check_sample(&s));
