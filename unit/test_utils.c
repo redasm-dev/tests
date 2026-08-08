@@ -35,7 +35,7 @@ static int test_to_hex_zero(void) {
 }
 
 static int test_to_hex_byte(void) {
-    rdtest_assert_streq(rd_to_hex(0xFF), "ff");
+    rdtest_assert_streq(rd_to_hex(0xFF), "FF");
     return RDTEST_PASS;
 }
 

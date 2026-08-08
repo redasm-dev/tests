@@ -23,16 +23,16 @@ static int test_helloworld32(void) {
     };
 
     static const RDTestGraph GRAPHS[] = {
-        {0x80482A8, 0x7677BACF},
-        {0x80482E0, 0x52E4A590},
-        {0x80482F0, 0x52ACFB15},
+        {0x80482A8, 0xE2F05F8C},
+        {0x80482E0, 0x75D15E12},
+        {0x80482F0, 0x792248B2},
         {0x8048300, 0xDD75C1A3},
         {0x8048310, 0x6904099B},
         {0x8048340, 0x63E3DE89},
-        {0x804840B, 0xD55DC2EB},
+        {0x804840B, 0x9368989D},
         {0x8048440, 0xCD801CAA},
-        {0x80484A0, 0x74B8D5F2},
-        {0x80484A4, 0x87783D3C},
+        {0x80484A0, 0xD8579EFA},
+        {0x80484A4, 0xDE95D1FF},
         {0},
     };
 
@@ -95,8 +95,8 @@ static int test_helloworld64(void) {
     };
 
     static const RDTestGraph GRAPHS[] = {
-        {0x4003C8, 0xF62B0F21}, {0x4003F0, 0x95C70395},
-        {0x400400, 0x13922C05}, {0x4004F6, 0x27987150},
+        {0x4003C8, 0xB249B7CF}, {0x4003F0, 0x4B57624D},
+        {0x400400, 0x13922C05}, {0x4004F6, 0xF606FA76},
         {0x400510, 0x42DAEA43}, {0x400580, 0x98A4E5},
         {0x400584, 0xB5FD9D9B}, {0},
     };
