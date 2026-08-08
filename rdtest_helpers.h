@@ -46,6 +46,7 @@ typedef struct RDTestSample {
 
     usize n_functions;
     bool skip_rendering;
+    bool skip_pairing;
 
     struct {
         RDAddress value;

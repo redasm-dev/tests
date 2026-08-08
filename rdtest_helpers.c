@@ -8,9 +8,97 @@
 
 #define RDTEST_PROJECT_FILE "project.rdx"
 
+typedef struct RDHookState {
+    bool open_add;
+    bool open_remove;
+    usize pending_index;
+    RDAddress pending_address;
+    usize n_added;
+    usize n_removed;
+    usize n_violations;
+} RDHookState;
+
 static const char RDTEST_BUFFER[RDTEST_BUFFER_SIZE] = {0};
 static const char* g_samples_dir = NULL;
 static RDContext* g_context = NULL;
+
+static void _rdtest_on_function_hook(RDContext* ctx, const RDHookEvent* e,
+                                     void* userdata) {
+    RDHookState* state = userdata;
+
+    if(!strcmp(e->name, "redasm.func_adding")) {
+        if(state->open_add || state->open_remove) state->n_violations++;
+        state->open_add = true;
+        state->pending_index = e->func.index;
+        state->pending_address = e->func.address;
+    }
+    else if(!strcmp(e->name, "redasm.func_added")) {
+        if(!state->open_add) {
+            state->n_violations++;
+            return;
+        }
+
+        // payload self-consistency: same address/index reported at "adding"
+        // and "added" for the same bracket
+        if(e->func.address != state->pending_address ||
+           e->func.index != state->pending_index)
+            state->n_violations++;
+
+        RDAddressSlice functions = rd_get_all_functions_address(ctx);
+        if(state->pending_index >= rd_slice_length(functions) ||
+           rd_slice_at(functions, state->pending_index) !=
+               state->pending_address)
+            state->n_violations++;
+
+        state->open_add = false;
+        state->n_added++;
+    }
+    else if(!strcmp(e->name, "redasm.func_removing")) {
+        if(state->open_add || state->open_remove) state->n_violations++;
+        state->open_remove = true;
+        state->pending_index = e->func.index;
+        state->pending_address = e->func.address;
+    }
+    else if(!strcmp(e->name, "redasm.func_removed")) {
+        if(!state->open_remove) {
+            state->n_violations++;
+            return;
+        }
+
+        // payload self-consistency: same address/index reported at "removing"
+        // and "removing" for the same bracket
+        if(e->func.address != state->pending_address ||
+           e->func.index != state->pending_index)
+            state->n_violations++;
+
+        RDAddressSlice functions = rd_get_all_functions_address(ctx);
+        if(state->pending_index < rd_slice_length(functions) &&
+           rd_slice_at(functions, state->pending_index) ==
+               state->pending_address)
+            state->n_violations++; // still present after "removed"
+
+        state->open_remove = false;
+        state->n_removed++;
+    }
+}
+
+static bool _rdtest_check_hook_pairing(const RDHookState* state,
+                                       const char* rel_path) {
+    if(state->open_add || state->open_remove) {
+        fprintf(stderr, "  TEST FAIL [%s]: dangling function hook bracket\n",
+                rel_path);
+        return false;
+    }
+
+    if(state->n_violations) {
+        fprintf(stderr,
+                "  TEST FAIL [%s]: %zu function hook pairing violations\n",
+                rel_path, state->n_violations);
+        return false;
+    }
+
+    return true;
+}
 
 static bool _rdtest_ext_matches(RDContext* ctx, const RDExternal* ext,
                                 const RDTestExternal* e) {
@@ -312,8 +400,31 @@ int rdtest_check_sample(RDTestSample* sample) {
     sample->ctx = rdtest_load_sample(sample->rel_path, sample->loader_id,
                                      sample->processor_id);
     g_context = sample->ctx;
+
+    RDHookState hookstate = {0};
+
+    if(!sample->skip_pairing) {
+        rd_register_hook(sample->ctx, RD_HOOK_FUNC, "redasm.func_adding",
+                         &_rdtest_on_function_hook, &hookstate);
+        rd_register_hook(sample->ctx, RD_HOOK_FUNC, "redasm.func_added",
+                         &_rdtest_on_function_hook, &hookstate);
+        rd_register_hook(sample->ctx, RD_HOOK_FUNC, "redasm.func_removing",
+                         &_rdtest_on_function_hook, &hookstate);
+        rd_register_hook(sample->ctx, RD_HOOK_FUNC, "redasm.func_removed",
+                         &_rdtest_on_function_hook, &hookstate);
+    }
+
     rd_disassemble(sample->ctx);
     rdtest_assert_pass(_rdtest_run(sample));
+
+    if(!sample->skip_pairing) {
+        rdtest_assert_true(
+            _rdtest_check_hook_pairing(&hookstate, sample->rel_path));
+
+        RDAddressSlice functions = rd_get_all_functions_address(sample->ctx);
+        rdtest_assert_eq(hookstate.n_added - hookstate.n_removed,
+                         rd_slice_length(functions));
+    }
 
     // immediate re-analysis shouldn't mutate anything
     rdtest_assert_true(rd_reanalyze(sample->ctx));
