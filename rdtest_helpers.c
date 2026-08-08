@@ -45,7 +45,7 @@ static int _rdtest_check_graph(RDContext* ctx, RDAddress address,
     const RDFunction* f = rd_find_function(ctx, address);
 
     if(!f) {
-        fprintf(stderr, "  TEST FAIL no function at 0x%08" PRIx64 "\n",
+        fprintf(stderr, "  TEST FAIL no function at 0x%08" PRIX64 "\n",
                 address);
         return RDTEST_FAIL;
     }
@@ -54,7 +54,7 @@ static int _rdtest_check_graph(RDContext* ctx, RDAddress address,
 
     if(hash != expected_hash) {
         fprintf(stderr,
-                "  TEST FAIL graph hash mismatch at 0x%08" PRIx64
+                "  TEST FAIL graph hash mismatch at 0x%08" PRIX64
                 ": expected 0x%08x, got 0x%08x\n",
                 address, expected_hash, hash);
         return RDTEST_FAIL;
@@ -72,8 +72,8 @@ static int _rdtest_run(RDTestSample* sample) {
 
         if(ep != sample->entry_point.value) {
             fprintf(stderr,
-                    "  TEST FAIL address mismatch: expected %" PRIx64
-                    ", got %" PRIx64 "\n",
+                    "  TEST FAIL address mismatch: expected %" PRIX64
+                    ", got %" PRIX64 "\n",
                     sample->entry_point.value, ep);
 
             return RDTEST_FAIL;
@@ -187,7 +187,7 @@ int rdtest_check_names(RDContext* ctx, const RDTestName* names) {
 
         if(!name || strcmp(n->name, name) != 0) {
             fprintf(stderr,
-                    "  TEST FAIL name mismatch at 0x%08" PRIx64
+                    "  TEST FAIL name mismatch at 0x%08" PRIX64
                     ": expected '%s', got '%s'\n",
                     n->address, n->name, name ? name : "(null)");
 
@@ -207,7 +207,7 @@ int rdtest_check_types(RDContext* ctx, const RDTestType* types) {
         RDType currt;
 
         if(!rd_get_type(ctx, tt->address, &currt)) {
-            fprintf(stderr, "  TEST FAIL no type at 0x%08" PRIx64 "\n",
+            fprintf(stderr, "  TEST FAIL no type at 0x%08" PRIX64 "\n",
                     tt->address);
             return RDTEST_FAIL;
         }
@@ -215,7 +215,7 @@ int rdtest_check_types(RDContext* ctx, const RDTestType* types) {
         RDType t;
         if(!rd_type_init(&t, tt->name, tt->count, tt->mod, ctx)) {
             fprintf(stderr,
-                    "  TEST FAIL type creation failed at 0x%08" PRIx64 "\n",
+                    "  TEST FAIL type creation failed at 0x%08" PRIX64 "\n",
                     tt->address);
             return RDTEST_FAIL;
         }
@@ -224,7 +224,7 @@ int rdtest_check_types(RDContext* ctx, const RDTestType* types) {
             char* currt_str = rd_strdup(rd_type_to_str(&currt, ctx));
 
             fprintf(stderr,
-                    "  TEST FAIL type mismatch at 0x%08" PRIx64
+                    "  TEST FAIL type mismatch at 0x%08" PRIX64
                     " (expected '%s', got '%s')\n",
                     tt->address, rd_type_to_str(&t, ctx), currt_str);
 
@@ -267,7 +267,7 @@ int rdtest_check_xrefs(RDContext* ctx, const RDTestXRef* xrefs) {
 
         if(!found) {
             fprintf(stderr,
-                    "  TEST FAIL xref missing: 0x%08" PRIx64 " -> 0x%08" PRIx64
+                    "  TEST FAIL xref missing: 0x%08" PRIX64 " -> 0x%08" PRIX64
                     "\n",
                     r->ref.address, r->address);
             return RDTEST_FAIL;
@@ -297,7 +297,7 @@ int rdtest_check_externals(RDContext* ctx, const RDTestExternal* externals) {
         }
 
         if(!found) {
-            fprintf(stderr, "  TEST FAIL external mismatch: 0x%08" PRIx64 "\n",
+            fprintf(stderr, "  TEST FAIL external mismatch: 0x%08" PRIX64 "\n",
                     e->address);
             return RDTEST_FAIL;
         }
