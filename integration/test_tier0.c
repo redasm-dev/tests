@@ -4,6 +4,7 @@
 
 static int test_masm0(void) {
     static const RDTestName NAMES[] = {
+        {0x00401029, "lpDialogFunc_401029"},
         {0x00401052, "imp_ExitProcess"},
         {0x00401058, "imp_GetModuleHandleA"},
         {0x0040105e, "imp_DialogBoxParamA"},
@@ -12,11 +13,17 @@ static int test_masm0(void) {
     };
 
     static const RDTestGraph GRAPHS[] = {
-        {0x401000, 0x742A23D4}, {0x401052, 0x158F87D0}, {0x401058, 0x7586538D},
-        {0x40105E, 0x6AC12571}, {0x401064, 0x4435A896}, {0},
+        {0x401000, 0x742A23D4},
+        {0x401029, 0x2E157EC4},
+        {0x401052, 0x158F87D0},
+        {0x401058, 0x7586538D},
+        {0x40105E, 0x6AC12571},
+        {0x401064, 0x4435A896},
+        {0},
     };
 
     static const RDTestXRef XREFS[] = {
+        {0x401029, {.address = 0x40100e, .type = RD_DR_ADDRESS}},
         {0x403000, {.address = 0x401007}},
         {0x403000, {.address = 0x401017}},
         {0},
@@ -47,7 +54,7 @@ static int test_masm0(void) {
         .graphs = GRAPHS,
         .xrefs = XREFS,
         .externals = EXTERNALS,
-        .n_functions = 5,
+        .n_functions = 6,
     };
 
     rdtest_assert_pass(rdtest_check_sample(&s));
@@ -58,6 +65,8 @@ static int test_masm0(void) {
 static int test_cm01(void) {
     static const RDTestName NAMES[] = {
         {0x00401128, "WndProc"},
+        {0x00401253, "lpDialogFunc_401253"},
+        {0x0040130a, "lpDialogFunc_40130a"},
         {0x0040140a, "imp_LoadCursorA"},
         {0x00401416, "imp_MessageBeep"},
         {0x00401428, "imp_LoadIconA"},
@@ -94,6 +103,8 @@ static int test_cm01(void) {
     };
 
     static const RDTestXRef XREFS[] = {
+        {0x40130a, {.address = 0x4011ef, .type = RD_DR_ADDRESS}},
+        {0x401253, {.address = 0x40120b, .type = RD_DR_ADDRESS}},
         {0x4020ca, {.address = 0x401007}},
         {0x4020ca, {.address = 0x401045}},
         {0x4020ca, {.address = 0x401097}},
@@ -116,15 +127,35 @@ static int test_cm01(void) {
     };
 
     static const RDTestGraph GRAPHS[] = {
-        {0x401000, 0x7774185},  {0x401128, 0x6B0E02B5}, {0x40134D, 0x3FEFFA67},
-        {0x401362, 0x244A59C4}, {0x40137E, 0xD03A6A3B}, {0x4013C2, 0xA5352780},
-        {0x4013D2, 0x261AC560}, {0x4013D8, 0xC412B795}, {0x40140A, 0x9032FCB8},
-        {0x401416, 0x5C22B6B9}, {0x401428, 0x7DC1ACCC}, {0x40143A, 0xEA802109},
-        {0x401440, 0x742C9DCA}, {0x40144C, 0xF67483C0}, {0x40145E, 0xBC70ED3C},
-        {0x40146A, 0x8853D995}, {0x401482, 0xB1E8676C}, {0x401488, 0x455BC201},
-        {0x401494, 0xF029A071}, {0x40149A, 0x4FCD3287}, {0x4014A0, 0xD4045FCB},
-        {0x4014A6, 0x7F6B559B}, {0x4014BE, 0x87E48E24}, {0x4014D6, 0x4D8E9A94},
-        {0x401506, 0x3FCC1C11}, {0x401512, 0x3F29DE74}, {0},
+        {0x401000, 0x7774185},
+        {0x401128, 0x6B0E02B5},
+        {0x401253, 0xD2717356},
+        {0x40130a, 0x770A5EF8},
+        {0x40134D, 0x3FEFFA67},
+        {0x401362, 0x244A59C4},
+        {0x40137E, 0xD03A6A3B},
+        {0x4013C2, 0xA5352780},
+        {0x4013D2, 0x261AC560},
+        {0x4013D8, 0xC412B795},
+        {0x40140A, 0x9032FCB8},
+        {0x401416, 0x5C22B6B9},
+        {0x401428, 0x7DC1ACCC},
+        {0x40143A, 0xEA802109},
+        {0x401440, 0x742C9DCA},
+        {0x40144C, 0xF67483C0},
+        {0x40145E, 0xBC70ED3C},
+        {0x40146A, 0x8853D995},
+        {0x401482, 0xB1E8676C},
+        {0x401488, 0x455BC201},
+        {0x401494, 0xF029A071},
+        {0x40149A, 0x4FCD3287},
+        {0x4014A0, 0xD4045FCB},
+        {0x4014A6, 0x7F6B559B},
+        {0x4014BE, 0x87E48E24},
+        {0x4014D6, 0x4D8E9A94},
+        {0x401506, 0x3FCC1C11},
+        {0x401512, 0x3F29DE74},
+        {0},
     };
 
     // clang-format off
@@ -207,7 +238,7 @@ static int test_cm01(void) {
         .graphs = GRAPHS,
         .xrefs = XREFS,
         .externals = EXTERNALS,
-        .n_functions = 26,
+        .n_functions = 31,
     };
 
     rdtest_assert_pass(rdtest_check_sample(&s));
