@@ -66,7 +66,7 @@ static int test_cm01(void) {
     static const RDTestName NAMES[] = {
         {0x00401128, "WndProc"},
         {0x00401253, "lpDialogFunc_401253"},
-        {0x0040130a, "lpDialogFunc_40130a"},
+        {0x0040130a, "lpDialogFunc_40130A"},
         {0x0040140a, "imp_LoadCursorA"},
         {0x00401416, "imp_MessageBeep"},
         {0x00401428, "imp_LoadIconA"},

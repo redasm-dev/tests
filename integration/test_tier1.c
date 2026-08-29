@@ -81,6 +81,65 @@ static int test_helloworld32(void) {
     return RDTEST_PASS;
 }
 
+static int test_helloworld32_stripped(void) {
+    static const RDTestName NAMES[] = {
+        {0x80482E0, "imp_puts"},
+        {0x80482F0, "imp___libc_start_main"},
+        {0x8048300, "imp___gmon_start__"},
+        {0x804840B, "main_804840B"},
+        {0x8048440, "init_8048440"},
+        {0x80484A0, "fini_80484A0"},
+        {0},
+    };
+
+    static const RDTestType TYPES[] = {
+        {0x080484c0, .name = "char", .count = 12},
+        {0},
+    };
+
+    static const RDTestGraph GRAPHS[] = {
+        {0x80482A8, 0xE2F05F8C}, {0x80482E0, 0x75D15E12},
+        {0x80482F0, 0x792248B2}, {0x8048300, 0xDD75C1A3},
+        {0x8048310, 0xE0E47C8A}, {0x8048340, 0x63E3DE89},
+        {0x804840B, 0x9368989D}, {0x8048440, 0xCD801CAA},
+        {0x80484A0, 0xD8579EFA}, {0},
+    };
+
+    static const RDTestXRef XREFS[] = {
+        {0x804840b, {.address = 0x8048327, .type = RD_DR_ADDRESS}},
+        {0x8048440, {.address = 0x8048320, .type = RD_DR_ADDRESS}},
+        {0x80484a0, {.address = 0x804831b, .type = RD_DR_ADDRESS}},
+        {0x80484c0, {.address = 0x804841f, .type = RD_DR_ADDRESS}},
+        {0},
+    };
+
+    // clang-format off
+    static const RDTestExternal EXTERNALS[] = {
+        {.kind = RD_EXT_EXPORTED, .address = 0x80484BC, .name = "_IO_stdin_used"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x8049FFC, .name = "__gmon_start__"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x804A00C, .name = "puts"},
+        {.kind = RD_EXT_IMPORTED, .address = 0x804A010, .name = "__libc_start_main"},
+        {0},
+    };
+    // clang-format on
+
+    RDTestSample s = {
+        .rel_path = "elf/helloworld32_stripped",
+        .loader_id = "elf",
+        .processor_id = "x86_32",
+        .entry_point = {.value = 0x08048310, .has_value = true, .no_ret = true},
+        .names = NAMES,
+        .types = TYPES,
+        .graphs = GRAPHS,
+        .externals = EXTERNALS,
+        .n_functions = 9,
+    };
+
+    rdtest_assert_pass(rdtest_check_sample(&s));
+
+    return RDTEST_PASS;
+}
+
 static int test_helloworld64(void) {
     static const RDTestName NAMES[] = {
         {0x4003c8, "_init"},           {0x4003f0, "imp_puts"},
@@ -367,6 +426,7 @@ static int test_hitpsx(void) {
 
 static const RDTest K_TESTS[] = {
     {"test_helloworld32", test_helloworld32},
+    {"test_helloworld32_stripped", test_helloworld32_stripped},
     {"test_helloworld64", test_helloworld64},
     {"test_hitpsx", test_hitpsx},
     {NULL, NULL},
