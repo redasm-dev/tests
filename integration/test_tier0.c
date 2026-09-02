@@ -4,7 +4,7 @@
 
 static int test_masm0(void) {
     static const RDTestName NAMES[] = {
-        {0x00401029, "lpDialogFunc_401029"},
+        {0x00401029, "lpDialogFunc_401029", .proto = "DLGPROC"},
         {0x00401052, "imp_ExitProcess"},
         {0x00401058, "imp_GetModuleHandleA"},
         {0x0040105e, "imp_DialogBoxParamA"},
@@ -65,8 +65,8 @@ static int test_masm0(void) {
 static int test_cm01(void) {
     static const RDTestName NAMES[] = {
         {0x00401128, "WndProc"},
-        {0x00401253, "lpDialogFunc_401253"},
-        {0x0040130a, "lpDialogFunc_40130A"},
+        {0x00401253, "lpDialogFunc_401253", .proto = "DLGPROC"},
+        {0x0040130a, "lpDialogFunc_40130A", .proto = "DLGPROC"},
         {0x0040140a, "imp_LoadCursorA"},
         {0x00401416, "imp_MessageBeep"},
         {0x00401428, "imp_LoadIconA"},

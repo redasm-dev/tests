@@ -12,6 +12,7 @@ typedef struct RDTestGraph {
 typedef struct RDTestName {
     RDAddress address;
     const char* name;
+    const char* proto;
 } RDTestName;
 
 typedef struct RDTestType {

@@ -282,6 +282,59 @@ int rdtest_check_names(RDContext* ctx, const RDTestName* names) {
             return RDTEST_FAIL;
         }
 
+        if(n->proto) {
+            const RDFunction* f = rd_find_function(ctx, n->address);
+
+            if(!f) {
+                fprintf(stderr,
+                        "  TEST FAIL name '%s' at 0x%08" PRIX64
+                        " is not a function\n",
+                        name ? name : "(null)", n->address);
+
+                return RDTEST_FAIL;
+            }
+
+            const RDTypeDef* tdef = rd_function_get_type(f);
+
+            if(!tdef) {
+                fprintf(stderr,
+                        "  TEST FAIL name '%s' at 0x%08" PRIX64
+                        ": not type set\n",
+                        name ? name : "(null)", n->address);
+
+                return RDTEST_FAIL;
+            }
+
+            if(rd_typedef_kind(tdef) != RD_TKIND_FUNC) {
+                fprintf(stderr,
+                        "  TEST FAIL name '%s' at 0x%08" PRIX64
+                        ": typedef is not a function\n",
+                        name ? name : "(null)", n->address);
+                return RDTEST_FAIL;
+            }
+
+            const char* tdef_name = rd_typedef_name(tdef);
+
+            if(!tdef_name) {
+                fprintf(stderr,
+                        "  TEST FAIL name '%s' at 0x%08" PRIX64
+                        ": invalid typedef name\n",
+                        name ? name : "(null)", n->address);
+
+                return RDTEST_FAIL;
+            }
+
+            if(strcmp(n->proto, tdef_name) != 0) {
+                fprintf(stderr,
+                        "  TEST FAIL name '%s' at 0x%08" PRIX64
+                        ": expected '%s', got '%s' type\n",
+                        name ? name : "(null)", n->address, n->proto,
+                        tdef_name);
+
+                return RDTEST_FAIL;
+            }
+        }
+
         n++;
     }
 
