@@ -220,13 +220,17 @@ void rdtest_deinit(void) {
     rd_deinit();
 }
 
-RDContext* rdtest_context_create(void) {
-    RDTestResultSlice slice = rd_test_data(RDTEST_BUFFER, RDTEST_BUFFER_SIZE);
+RDContext* rdtest_context_create_from(const char* data, usize n) {
+    RDTestResultSlice slice = rd_test_data(data, n);
     if(rd_slice_is_empty(slice)) return NULL;
 
     RDAcceptParams params = {.mode = RD_AM_NEW};
     RDAcceptResult res = rd_accept(rd_slice_at(slice, 0), &params);
     return res.context; // NULL on failure
+}
+
+RDContext* rdtest_context_create(void) {
+    return rdtest_context_create_from(RDTEST_BUFFER, RDTEST_BUFFER_SIZE);
 }
 
 RDContext* rdtest_load_sample(const char* relpath, const char* loaderid,

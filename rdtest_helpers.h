@@ -64,6 +64,7 @@ typedef struct RDTestSample {
 
 void rdtest_init(int argc, char** argv);
 void rdtest_deinit(void);
+RDContext* rdtest_context_create_from(const char* data, usize n);
 RDContext* rdtest_context_create(void);
 RDContext* rdtest_load_sample(const char* relpath, const char* loaderid,
                               const char* processorid);
