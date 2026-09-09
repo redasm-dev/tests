@@ -1,6 +1,5 @@
 #include "rdtest.h"
 #include "rdtest_helpers.h"
-#include <string.h>
 
 typedef struct RDTestTypeShape {
     const char* name;
@@ -8,6 +7,26 @@ typedef struct RDTestTypeShape {
     RDTypeModifier mod;
     usize size;
 } RDTestTypeShape;
+
+static void _mk_point(RDContext* ctx) {
+    // clang-format off
+    RDTypeDef* point = rd_typedef_create_struct("Point", ctx);
+    rd_typedef_add_member(point, "u32", "x", 0, RD_TYPE_NONE, ctx);
+    rd_typedef_add_member(point, "u32", "y", 0, RD_TYPE_NONE, ctx);
+    rd_typedef_register(point, ctx);
+    // clang-format on
+}
+
+static void _mk_point11(RDContext* ctx) {
+    _mk_point(ctx);
+
+    // clang-format off
+    RDTypeDef* point11 = rd_typedef_create_struct("Point11", ctx);
+    rd_typedef_add_member(point11, "Point", "first", 0, RD_TYPE_NONE, ctx);
+    rd_typedef_add_member(point11, "Point", "items", 10, RD_TYPE_NONE, ctx);
+    rd_typedef_register(point11, ctx);
+    // clang-format on
+}
 
 static int test_primitives(void) {
     RDContext* ctx = rdtest_context_create();
@@ -301,700 +320,320 @@ static int test_typedef_resolve_offset_union_rejected(void) {
     return RDTEST_PASS;
 }
 
-static int test_type_resolve_offset_coincidence(void) {
+static int test_type_resolve_chain_coincidence(void) {
     RDContext* ctx = rdtest_context_create();
     rdtest_assert(ctx, "failed to create test context");
-
-    // clang-format off
-    RDTypeDef* point = rd_typedef_create_struct("Point", ctx);
-    rdtest_assert_true(rd_typedef_add_member(point, "u32", "x", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_add_member(point, "u32", "y", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_register(point, ctx));
-
-    RDTypeDef* point11 = rd_typedef_create_struct("Point11", ctx);
-    rdtest_assert_true(rd_typedef_add_member(point11, "Point", "first", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_add_member(point11, "Point", "items", 10, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_register(point11, ctx));
-    // clang-format on
+    _mk_point11(ctx);
 
     RDType root;
     rdtest_assert_true(rd_type_init(&root, "Point11", 0, RD_TYPE_NONE, ctx));
 
-    RDResolveResult r = {0};
-    rdtest_assert_true(rd_type_resolve_offset(ctx, &root, 0, 0, &r));
-    rdtest_assert_streq(r.field.name, "first");
-    rdtest_assert_streq(rd_typedef_name(r.field.type.def), "Point");
-    rdtest_assert_eq(r.field.type.count, 0);
-    rdtest_assert_eq(r.depth, 0);
-    rdtest_assert(!r.item_idx.has_value,
-                  "item_idx must be unset, no array crossed");
+    RDResolveResultSlice s = rd_type_resolve_chain(ctx, &root, 0);
+    rdtest_assert_eq(s.length, 2);
+
+    rdtest_assert_streq(s.data[0].field.name, "first");
+    rdtest_assert_streq(rd_typedef_name(s.data[0].field.type.def), "Point");
+    rdtest_assert_eq(s.data[0].depth, 0);
+    rdtest_assert_true(s.data[0].at_offset);
+    rdtest_assert(!s.data[0].item_idx.has_value, "no array crossed");
+
+    rdtest_assert_streq(s.data[1].field.name, "x");
+    rdtest_assert_streq(rd_typedef_name(s.data[1].field.type.def), "u32");
+    rdtest_assert_eq(s.data[1].depth, 1);
+    rdtest_assert_true(s.data[1].at_offset);
 
     rd_destroy(ctx);
     return RDTEST_PASS;
 }
 
-static int test_type_resolve_offset_min_depth(void) {
+static int test_type_resolve_chain_passthrough(void) {
     RDContext* ctx = rdtest_context_create();
     rdtest_assert(ctx, "failed to create test context");
-
-    // clang-format off
-    RDTypeDef* point = rd_typedef_create_struct("Point", ctx);
-    rdtest_assert_true(rd_typedef_add_member(point, "u32", "x", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_add_member(point, "u32", "y", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_register(point, ctx));
-
-    RDTypeDef* point11 = rd_typedef_create_struct("Point11", ctx);
-    rdtest_assert_true(rd_typedef_add_member(point11, "Point", "first", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_add_member(point11, "Point", "items", 10, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_register(point11, ctx));
-    // clang-format on
+    _mk_point11(ctx);
 
     RDType root;
     rdtest_assert_true(rd_type_init(&root, "Point11", 0, RD_TYPE_NONE, ctx));
 
-    // min_depth=0
-    // stops at the shallowest entity on the offset: first. The container
-    // (Point11) is NEVER an answer, resolution searches within
-    RDResolveResult r0 = {0};
-    rdtest_assert_true(rd_type_resolve_offset(ctx, &root, 0, 0, &r0));
-    rdtest_assert_streq(r0.field.name, "first");
-    rdtest_assert_eq(r0.depth, 0);
+    RDResolveResultSlice s = rd_type_resolve_chain(ctx, &root, 4);
+    rdtest_assert_eq(s.length, 2);
 
-    // min_depth=1
-    // Point11's own boundary no longer satisfies the floor (0 >= 1 is false),
-    // forced deeper into "first" -> x (rel==0 there, depth==1, 1>=1 satisfied)
-    RDResolveResult r1 = {0};
-    rdtest_assert_true(rd_type_resolve_offset(ctx, &root, 0, 1, &r1));
-    rdtest_assert_streq(r1.field.name, "x");
-    rdtest_assert_streq(rd_typedef_name(r1.field.type.def), "u32");
-    rdtest_assert_eq(r1.depth, 1);
+    rdtest_assert_streq(s.data[0].field.name, "first");
+    rdtest_assert_false(s.data[0].at_offset); // begins at 0, not at 4
 
-    // RD_MAX_DEPTH
-    // never satisfies the floor at any coincidence point, forced all the way to
-    // the true leaf regardless of how deep
-    RDResolveResult rmax = {0};
-    rdtest_assert_true(
-        rd_type_resolve_offset(ctx, &root, 0, RD_MAX_DEPTH, &rmax));
-    rdtest_assert_streq(rmax.field.name, "x");
-    rdtest_assert_streq(rd_typedef_name(rmax.field.type.def), "u32");
-    rdtest_assert_eq(rmax.depth,
-                     1); // same leaf as min_depth=1, since x IS the leaf here
-
-    // a genuinely nonzero rel (first.y) ignores min_depth entirely.
-    // The walk was never optional at this point regardless of the floor
-    RDResolveResult ry = {0};
-    rdtest_assert_true(rd_type_resolve_offset(ctx, &root, 4, 0, &ry));
-    rdtest_assert_streq(ry.field.name, "y");
-    rdtest_assert_eq(ry.depth, 1);
+    rdtest_assert_streq(s.data[1].field.name, "y");
+    rdtest_assert_eq(s.data[1].depth, 1);
+    rdtest_assert_true(s.data[1].at_offset);
 
     rd_destroy(ctx);
     return RDTEST_PASS;
 }
 
-static int test_type_resolve_offset_deep_nested(void) {
+static int test_type_resolve_chain_array_passthrough(void) {
     RDContext* ctx = rdtest_context_create();
     rdtest_assert(ctx, "failed to create test context");
-
-    // clang-format off
-    RDTypeDef* point = rd_typedef_create_struct("Point", ctx);
-    rdtest_assert_true(rd_typedef_add_member(point, "u32", "x", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_add_member(point, "u32", "y", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_register(point, ctx));
-
-    RDTypeDef* point11 = rd_typedef_create_struct("Point11", ctx);
-    rdtest_assert_true(rd_typedef_add_member(point11, "Point", "first", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_add_member(point11, "Point", "items", 10, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_register(point11, ctx));
-    // clang-format on
+    _mk_point11(ctx);
 
     RDType root;
     rdtest_assert_true(rd_type_init(&root, "Point11", 0, RD_TYPE_NONE, ctx));
 
-    RDResolveResult r = {0};
-    rdtest_assert_true(rd_type_resolve_offset(ctx, &root, 4, 0, &r)); // first.y
-    rdtest_assert_streq(r.field.name, "y");
-    rdtest_assert_streq(rd_typedef_name(r.field.type.def), "u32");
-    rdtest_assert_eq(r.depth, 1);
-    rdtest_assert(!r.item_idx.has_value, "no array crossed");
+    // items[2].y == 8 + (2 * 8) + 4 == 28: `items` crossed at a nonzero
+    // offset, element 2 crossed at a nonzero offset, y starts there
+    RDResolveResultSlice s = rd_type_resolve_chain(ctx, &root, 28);
+    rdtest_assert_eq(s.length, 3);
+
+    rdtest_assert_streq(s.data[0].field.name, "items");
+    rdtest_assert_false(s.data[0].at_offset);
+
+    rdtest_assert(!s.data[1].field.name, "an element has no member name");
+    rdtest_assert_true(s.data[1].item_idx.has_value);
+    rdtest_assert_eq(s.data[1].item_idx.value, 2);
+    rdtest_assert_false(s.data[1].at_offset);
+
+    rdtest_assert_streq(s.data[2].field.name, "y");
+    rdtest_assert_true(s.data[2].at_offset);
 
     rd_destroy(ctx);
     return RDTEST_PASS;
 }
 
-static int test_type_resolve_offset_array(void) {
+static int test_type_resolve_chain_element_head(void) {
     RDContext* ctx = rdtest_context_create();
     rdtest_assert(ctx, "failed to create test context");
-
-    // clang-format off
-    RDTypeDef* point = rd_typedef_create_struct("Point", ctx);
-    rdtest_assert_true(rd_typedef_add_member(point, "u32", "x", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_add_member(point, "u32", "y", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_register(point, ctx));
-    // clang-format on
+    _mk_point(ctx);
 
     RDType arr;
     rdtest_assert_true(rd_type_init(&arr, "Point", 10, RD_TYPE_NONE, ctx));
 
-    usize target_offset =
-        (3 * rd_typedef_size(point)) + sizeof(u32); // items[3].y
+    // element 3's own edge: the element and its first member both start
+    // there, so both are answers
+    RDResolveResultSlice s = rd_type_resolve_chain(ctx, &arr, 3 * 8ULL);
+    rdtest_assert_eq(s.length, 2);
 
-    RDResolveResult r = {0};
-    rdtest_assert_true(rd_type_resolve_offset(ctx, &arr, target_offset, 0, &r));
-    rdtest_assert(r.item_idx.has_value, "array was crossed");
-    rdtest_assert_eq(r.item_idx.value, 3);
-    rdtest_assert_streq(r.field.name, "y");
-    rdtest_assert_streq(rd_typedef_name(r.field.type.def), "u32");
-    rdtest_assert_eq(r.depth, 1);
+    rdtest_assert_eq(s.data[0].item_idx.value, 3);
+    rdtest_assert_streq(rd_typedef_name(s.data[0].field.type.def), "Point");
+    rdtest_assert_eq(s.data[0].field.type.count, 0); // the ELEMENT, not [10]
+    rdtest_assert_eq(s.data[0].depth, 0);
+    rdtest_assert_true(s.data[0].at_offset);
 
-    RDResolveResult elem_r = {0};
-    rdtest_assert_true(rd_type_resolve_offset(
-        ctx, &arr, 3 * rd_typedef_size(point), 0, &elem_r));
-    rdtest_assert(elem_r.item_idx.has_value, "array was crossed");
-    rdtest_assert_eq(elem_r.item_idx.value, 3);
-    rdtest_assert_streq(rd_typedef_name(elem_r.field.type.def), "Point");
-    rdtest_assert_eq(elem_r.field.type.count, 0);
-    rdtest_assert_eq(elem_r.depth, 0);
+    rdtest_assert_streq(s.data[1].field.name, "x");
+    rdtest_assert_eq(s.data[1].depth, 1);
+    rdtest_assert_true(s.data[1].at_offset);
 
     rd_destroy(ctx);
     return RDTEST_PASS;
 }
 
-static int test_type_resolve_offset_array_of_pointers(void) {
-    RDContext* ctx = rdtest_context_create();
-    rdtest_assert(ctx, "failed to create test context");
-
-    // clang-format off
-    RDTypeDef* point = rd_typedef_create_struct("Point", ctx);
-    rdtest_assert_true(rd_typedef_add_member(point, "u32", "x", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_add_member(point, "u32", "y", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_register(point, ctx));
-    // clang-format on
-
-    RDType arr;
-    rdtest_assert_true(rd_type_init(&arr, "Point", 10, RD_TYPE_PTR, ctx));
-
-    RDType ptr;
-    rdtest_assert_true(rd_type_init(&ptr, "Point", 0, RD_TYPE_PTR, ctx));
-    usize ptr_size = rd_type_size(&ptr, ctx);
-
-    RDResolveResult r = {0};
-    rdtest_assert_true(rd_type_resolve_offset(ctx, &arr, 3 * ptr_size, 0, &r));
-    rdtest_assert(r.item_idx.has_value, "array was crossed");
-    rdtest_assert_eq(r.item_idx.value, 3);
-    rdtest_assert_eq(r.field.type.mod, RD_TYPE_PTR);
-    rdtest_assert_eq(r.depth, 0);
-
-    RDResolveResult bad = {0};
-    rdtest_assert_false(
-        rd_type_resolve_offset(ctx, &arr, (3 * ptr_size) + 1, 0, &bad));
-
-    rd_destroy(ctx);
-    return RDTEST_PASS;
-}
-
-static int test_type_resolve_offset_pointer_terminal(void) {
-    RDContext* ctx = rdtest_context_create();
-    rdtest_assert(ctx, "failed to create test context");
-
-    // clang-format off
-    RDTypeDef* point = rd_typedef_create_struct("Point", ctx);
-    rdtest_assert_true(rd_typedef_add_member(point, "u32", "x", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_add_member(point, "u32", "y", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_register(point, ctx));
-    // clang-format on
-
-    RDType ptr;
-    rdtest_assert_true(rd_type_init(&ptr, "Point", 0, RD_TYPE_PTR, ctx));
-
-    RDResolveResult r = {0};
-    // even with a floor requesting max depth, a pointer
-    // terminal is unconditional: min_depth is never consulted there
-    rdtest_assert_true(rd_type_resolve_offset(ctx, &ptr, 0, RD_MAX_DEPTH, &r));
-    rdtest_assert_eq(r.depth, 0);
-    rdtest_assert(!r.item_idx.has_value, "no array involved");
-
-    RDResolveResult bad = {0};
-    rdtest_assert_false(rd_type_resolve_offset(ctx, &ptr, 1, 0, &bad));
-
-    rd_destroy(ctx);
-    return RDTEST_PASS;
-}
-
-static int test_type_resolve_offset_primitive_leaf(void) {
+static int test_type_resolve_chain_primitive_leaf(void) {
     RDContext* ctx = rdtest_context_create();
     rdtest_assert(ctx, "failed to create test context");
 
     RDType t;
     rdtest_assert_true(rd_type_init(&t, "u32", 0, RD_TYPE_NONE, ctx));
 
-    RDResolveResult r = {0};
-    rdtest_assert_true(rd_type_resolve_offset(ctx, &t, 0, RD_MAX_DEPTH, &r));
-    rdtest_assert_streq(rd_typedef_name(r.field.type.def), "u32");
-    rdtest_assert_eq(r.depth, 0);
-    rdtest_assert(!r.item_idx.has_value, "no array involved");
+    RDResolveResultSlice s = rd_type_resolve_chain(ctx, &t, 0);
+    rdtest_assert_eq(s.length, 1);
+    rdtest_assert_streq(rd_typedef_name(s.data[0].field.type.def), "u32");
+    rdtest_assert_eq(s.data[0].depth, 0);
+    rdtest_assert_true(s.data[0].at_offset);
+    rdtest_assert(!s.data[0].item_idx.has_value, "no array involved");
 
-    RDResolveResult bad = {0};
-    rdtest_assert_false(rd_type_resolve_offset(ctx, &t, 2, 0, &bad));
-
-    rd_destroy(ctx);
-    return RDTEST_PASS;
-}
-
-static int test_type_resolve_offset_not_found(void) {
-    RDContext* ctx = rdtest_context_create();
-    rdtest_assert(ctx, "failed to create test context");
-
-    // clang-format off
-    RDTypeDef* point = rd_typedef_create_struct("Point", ctx);
-    rdtest_assert_true(rd_typedef_add_member(point, "u32", "x", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_add_member(point, "u32", "y", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_register(point, ctx));
-    // clang-format on
-
-    RDType t;
-    rdtest_assert_true(rd_type_init(&t, "Point", 0, RD_TYPE_NONE, ctx));
-
-    RDResolveResult r = {0};
-    rdtest_assert_false(rd_type_resolve_offset(ctx, &t, 100, 0, &r));
+    // an offset inside a solid type is malformed input
+    RDResolveResultSlice bad = rd_type_resolve_chain(ctx, &t, 2);
+    rdtest_assert_eq(bad.length, 0);
 
     rd_destroy(ctx);
     return RDTEST_PASS;
 }
 
-// ===========================================================================
-// Honest-exhaustion contract (the `has_more` guard)
-//
-// `min_depth` is a FLOOR. When the schema is SHALLOWER than the floor, the
-// walk must stop at the deepest REAL entity and report that depth honestly
-// (never invent a deeper anonymous clone). Callers detect "nothing that deep
-// exists" by comparing out->depth < min_depth after a `true` return.
-// ===========================================================================
-
-static int test_type_resolve_offset_exhaustion_scalar(void) {
+static int test_type_resolve_chain_pointer_terminal(void) {
     RDContext* ctx = rdtest_context_create();
     rdtest_assert(ctx, "failed to create test context");
-
-    RDType t;
-    rdtest_assert_true(rd_type_init(&t, "u32", 0, RD_TYPE_NONE, ctx));
-
-    // a bare scalar has chain length 1: any floor > 0 is unsatisfiable.
-    // Honest answer: the scalar itself, depth 0 (0 < 1 = caller's signal)
-    RDResolveResult r = {0};
-    rdtest_assert_true(rd_type_resolve_offset(ctx, &t, 0, 1, &r));
-    rdtest_assert_streq(rd_typedef_name(r.field.type.def), "u32");
-    rdtest_assert_eq(r.depth, 0);
-
-    rd_destroy(ctx);
-    return RDTEST_PASS;
-}
-
-static int test_type_resolve_offset_exhaustion_struct(void) {
-    RDContext* ctx = rdtest_context_create();
-    rdtest_assert(ctx, "failed to create test context");
-
-    /* Memory picture (Point = 8 bytes, Point11 = 88 bytes):
-     *
-     *  off:  0        4        8       16      ...     88
-     *        +--------+--------+--------+---     ---+
-     *        | first.x| first.y|items[0]|    ...    |
-     *        +--------+--------+--------+---     ---+
-     *        ^                 ^
-     *        Point11           items
-     *        first             items[0]
-     *        first.x           items[0].x
-     *
-     * Coincidence chain at off 0: [first (d0), x (d1)], ends at x, a leaf.
-     * Forcing min_depth=2 must NOT fabricate a depth-2 anonymous u32. */
-    // clang-format off
-    RDTypeDef* point = rd_typedef_create_struct("Point", ctx);
-    rdtest_assert_true(rd_typedef_add_member(point, "u32", "x", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_add_member(point, "u32", "y", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_register(point, ctx));
-
-    RDTypeDef* point11 = rd_typedef_create_struct("Point11", ctx);
-    rdtest_assert_true(rd_typedef_add_member(point11, "Point", "first", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_add_member(point11, "Point", "items", 10, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_register(point11, ctx));
-    // clang-format on
-
-    RDType root;
-    rdtest_assert_true(rd_type_init(&root, "Point11", 0, RD_TYPE_NONE, ctx));
-
-    // floor 2, chain ends at depth 1: honest stop at x, WITH its real name
-    RDResolveResult r = {0};
-    rdtest_assert_true(rd_type_resolve_offset(ctx, &root, 0, 2, &r));
-    rdtest_assert_streq(r.field.name, "x");
-    rdtest_assert_eq(r.depth, 1); // 1 < 2: caller sees the chain ended
-
-    // off 4 (first.y): reached through first at rel!=0 (mandatory descent),
-    // then y is a leaf. Floor 5 is absurd; honest stop is y at depth 1.
-    RDResolveResult ry = {0};
-    rdtest_assert_true(rd_type_resolve_offset(ctx, &root, 4, 5, &ry));
-    rdtest_assert_streq(ry.field.name, "y");
-    rdtest_assert_eq(ry.depth, 1);
-    rdtest_assert(!ry.item_idx.has_value, "no array crossed");
-
-    rd_destroy(ctx);
-    return RDTEST_PASS;
-}
-
-static int test_type_resolve_offset_exhaustion_array(void) {
-    RDContext* ctx = rdtest_context_create();
-    rdtest_assert(ctx, "failed to create test context");
-
-    // u32[4]: an element boundary with a scalar element type. Forcing past
-    // it must stop AT the element (depth 0), not inside a phantom clone
-    RDType arr_u32;
-    rdtest_assert_true(rd_type_init(&arr_u32, "u32", 4, RD_TYPE_NONE, ctx));
-
-    RDResolveResult r = {0};
-    rdtest_assert_true(
-        rd_type_resolve_offset(ctx, &arr_u32, 2 * sizeof(u32), 3, &r));
-    rdtest_assert(r.item_idx.has_value, "array was crossed");
-    rdtest_assert_eq(r.item_idx.value, 2);
-    rdtest_assert_eq(r.depth, 0); // 0 < 3: chain ends at the element
-
-    // clang-format off
-    RDTypeDef* point = rd_typedef_create_struct("Point", ctx);
-    rdtest_assert_true(rd_typedef_add_member(point, "u32", "x", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_add_member(point, "u32", "y", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_register(point, ctx));
-    // clang-format on
-
-    // Point[10] with RD_MAX_DEPTH, at element 3's boundary. Depth counts
-    // recursions taken: the floor rejects the element's own stop (depth 0),
-    // one hop enters element 3, whose first member x coincides (rel==0) at
-    // depth 1. x is a leaf: honest stop there, infinite floor or not.
-    RDType arr_pt;
-    rdtest_assert_true(rd_type_init(&arr_pt, "Point", 10, RD_TYPE_NONE, ctx));
-
-    RDResolveResult rp = {0};
-    rdtest_assert_true(rd_type_resolve_offset(
-        ctx, &arr_pt, 3 * rd_typedef_size(point), RD_MAX_DEPTH, &rp));
-    rdtest_assert_streq(rp.field.name, "x");
-    rdtest_assert_eq(rp.depth, 1);
-    rdtest_assert_eq(rp.item_idx.value, 3);
-
-    // Point*[10]: pointer elements are opaque, the element IS the terminus
-    RDType arr_ptr;
-    rdtest_assert_true(rd_type_init(&arr_ptr, "Point", 10, RD_TYPE_PTR, ctx));
+    _mk_point(ctx);
 
     RDType ptr;
     rdtest_assert_true(rd_type_init(&ptr, "Point", 0, RD_TYPE_PTR, ctx));
 
-    RDResolveResult rptr = {0};
-    rdtest_assert_true(rd_type_resolve_offset(
-        ctx, &arr_ptr, 3 * rd_type_size(&ptr, ctx), RD_MAX_DEPTH, &rptr));
-    rdtest_assert_eq(rptr.field.type.mod, RD_TYPE_PTR);
-    rdtest_assert_eq(rptr.depth, 0);
-    rdtest_assert_eq(rptr.item_idx.value, 3);
+    // a pointer is opaque: its target is not part of this schema
+    RDResolveResultSlice s = rd_type_resolve_chain(ctx, &ptr, 0);
+    rdtest_assert_eq(s.length, 1);
+    rdtest_assert_eq(s.data[0].field.type.mod, RD_TYPE_PTR);
+    rdtest_assert_eq(s.data[0].depth, 0);
+
+    RDResolveResultSlice bad = rd_type_resolve_chain(ctx, &ptr, 1);
+    rdtest_assert_eq(bad.length, 0);
 
     rd_destroy(ctx);
     return RDTEST_PASS;
 }
 
-static int test_type_resolve_offset_array_bounds(void) {
+static int test_type_resolve_chain_union_is_opaque(void) {
     RDContext* ctx = rdtest_context_create();
     rdtest_assert(ctx, "failed to create test context");
 
     // clang-format off
-    RDTypeDef* point = rd_typedef_create_struct("Point", ctx);
-    rdtest_assert_true(rd_typedef_add_member(point, "u32", "x", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_add_member(point, "u32", "y", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_register(point, ctx));
-    // clang-format on
-
-    RDType arr;
-    rdtest_assert_true(rd_type_init(&arr, "Point", 10, RD_TYPE_NONE, ctx));
-
-    // element 10 of a [10] array does not exist: public API must fail
-    // cleanly (RD_LOG_FAIL + false), never "succeed" with item_idx = 10
-    RDResolveResult r = {0};
-    rdtest_assert_false(
-        rd_type_resolve_offset(ctx, &arr, 10 * rd_typedef_size(point), 0, &r));
-
-    RDResolveResult r2 = {0};
-    rdtest_assert_false(rd_type_resolve_offset(ctx, &arr, 999, 0, &r2));
-
-    rd_destroy(ctx);
-    return RDTEST_PASS;
-}
-
-static int test_type_resolve_offset_count_one_is_array(void) {
-    RDContext* ctx = rdtest_context_create();
-    rdtest_assert(ctx, "failed to create test context");
-
-    // [1] is a REAL array (eg, TOKEN_PRIVILEGES.Privileges[1],
-    // IMAGE_IMPORT_BY_NAME.Name[1]) declares "an array that continues".
-    // Declaration fidelity: count == 0 is a scalar, count >= 1 an array.
-    // No normalization anywhere.
-    RDType t;
-    rdtest_assert_true(rd_type_init(&t, "u32", 1, RD_TYPE_NONE, ctx));
-
-    RDResolveResult r = {0};
-    rdtest_assert_true(rd_type_resolve_offset(ctx, &t, 0, 0, &r));
-    rdtest_assert_streq(rd_typedef_name(r.field.type.def), "u32");
-    rdtest_assert(r.item_idx.has_value, "a [1] crosses its array");
-    rdtest_assert_eq(r.item_idx.value, 0);
-    rdtest_assert_eq(r.depth, 0);
-
-    // forcing past the single scalar element exhausts honestly
-    RDResolveResult r2 = {0};
-    rdtest_assert_true(rd_type_resolve_offset(ctx, &t, 0, 1, &r2));
-    rdtest_assert_eq(r2.depth, 0); // 0 < 1: nothing deeper exists
-
-    // and [1] means ONE element: its second is out of bounds
-    RDResolveResult r3 = {0};
-    rdtest_assert_false(rd_type_resolve_offset(ctx, &t, sizeof(u32), 0, &r3));
-
-    rd_destroy(ctx);
-    return RDTEST_PASS;
-}
-
-static int test_type_resolve_offset_union_is_opaque(void) {
-    RDContext* ctx = rdtest_context_create();
-    rdtest_assert(ctx, "failed to create test context");
-
-    /* Unions are deliberately unresolvable below their own boundary
-     * (design rule: which member "is" at the address is a rendering
-     * convention, not an address-resolvable fact). The resolver treats a
-     * union like a leaf: never descends into it, never forced past it. */
-    // clang-format off
-    RDTypeDef* value = rd_typedef_create_union("Value", ctx);
-    rdtest_assert_true(rd_typedef_add_member(value, "u32", "as_u32", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_add_member(value, "u16", "as_u16", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_register(value, ctx));
-
+    RDTypeDef* u = rd_typedef_create_union("U", ctx);
+    rdtest_assert_true(rd_typedef_add_member(u, "u32", "a", 0, RD_TYPE_NONE, ctx));
+    rdtest_assert_true(rd_typedef_add_member(u, "u16", "b", 0, RD_TYPE_NONE, ctx));
+    rdtest_assert_true(rd_typedef_register(u, ctx));
+ 
     RDTypeDef* holder = rd_typedef_create_struct("Holder", ctx);
-    rdtest_assert_true(rd_typedef_add_member(holder, "u32", "tag", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_add_member(holder, "Value", "v", 0, RD_TYPE_NONE, ctx));
+    rdtest_assert_true(rd_typedef_add_member(holder, "u32", "k", 0, RD_TYPE_NONE, ctx));
+    rdtest_assert_true(rd_typedef_add_member(holder, "U", "v", 0, RD_TYPE_NONE, ctx));
     rdtest_assert_true(rd_typedef_register(holder, ctx));
     // clang-format on
 
-    // the union itself resolves fine at its own boundary...
-    RDType uv;
-    rdtest_assert_true(rd_type_init(&uv, "Value", 0, RD_TYPE_NONE, ctx));
-
-    RDResolveResult r = {0};
-    rdtest_assert_true(rd_type_resolve_offset(ctx, &uv, 0, RD_MAX_DEPTH, &r));
-    rdtest_assert_eq(r.depth, 0);
-
-    // ...but never below it, even with an infinite floor: the union member
-    // is the honest terminus, with its own name intact. v sits at rel==0
-    // directly under Holder.
-    // Zero recursions taken, so depth is 0
     RDType root;
     rdtest_assert_true(rd_type_init(&root, "Holder", 0, RD_TYPE_NONE, ctx));
 
-    RDResolveResult rv = {0};
-    rdtest_assert_true(
-        rd_type_resolve_offset(ctx, &root, sizeof(u32), RD_MAX_DEPTH, &rv));
-    rdtest_assert_streq(rv.field.name, "v");
-    rdtest_assert_eq(rv.depth, 0);
+    // the union is a solid leaf: the chain stops at `v`, never inside it
+    RDResolveResultSlice s = rd_type_resolve_chain(ctx, &root, sizeof(u32));
+    rdtest_assert_eq(s.length, 1);
+    rdtest_assert_streq(s.data[0].field.name, "v");
+    rdtest_assert_eq(s.data[0].depth, 0);
 
-    // an offset INSIDE the union body is malformed input: clean failure
-    RDResolveResult bad = {0};
-    rdtest_assert_false(
-        rd_type_resolve_offset(ctx, &root, sizeof(u32) + 2, 0, &bad));
+    // an offset inside the union body is malformed input
+    RDResolveResultSlice bad =
+        rd_type_resolve_chain(ctx, &root, sizeof(u32) + 2);
+    rdtest_assert_eq(bad.length, 0);
 
     rd_destroy(ctx);
     return RDTEST_PASS;
 }
 
-static int test_type_resolve_offset_result_is_zeroed(void) {
+static int test_type_resolve_chain_string_is_solid(void) {
     RDContext* ctx = rdtest_context_create();
     rdtest_assert(ctx, "failed to create test context");
 
-    // clang-format off
-    RDTypeDef* point = rd_typedef_create_struct("Point", ctx);
-    rdtest_assert_true(rd_typedef_add_member(point, "u32", "x", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_add_member(point, "u32", "y", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_register(point, ctx));
-    // clang-format on
+    RDType str;
+    rdtest_assert_true(rd_type_init(&str, "char", 8, RD_TYPE_NONE, ctx));
+
+    /*
+     * char[n] renders as one literal, so rd_i_type_has_more reports nothing
+     * enumerable inside it: the chain is the first element and stops.
+     */
+    RDResolveResultSlice s = rd_type_resolve_chain(ctx, &str, 0);
+    rdtest_assert_eq(s.length, 1);
+    rdtest_assert_eq(s.data[0].depth, 0);
+
+    rd_destroy(ctx);
+    return RDTEST_PASS;
+}
+
+// ===========================================================================
+// Malformed input: clean failure, never a fabricated answer
+// ===========================================================================
+
+static int test_type_resolve_chain_array_bounds(void) {
+    RDContext* ctx = rdtest_context_create();
+    rdtest_assert(ctx, "failed to create test context");
+    _mk_point(ctx);
+
+    RDType arr;
+    rdtest_assert_true(rd_type_init(&arr, "Point", 10, RD_TYPE_NONE, ctx));
+
+    // element 10 of a [10] array does not exist: never "succeed" with
+    // item_idx == 10
+    RDResolveResultSlice s = rd_type_resolve_chain(ctx, &arr, 10 * 8ULL);
+    rdtest_assert_eq(s.length, 0);
+
+    RDResolveResultSlice s2 = rd_type_resolve_chain(ctx, &arr, 999);
+    rdtest_assert_eq(s2.length, 0);
+
+    rd_destroy(ctx);
+    return RDTEST_PASS;
+}
+
+static int test_type_resolve_chain_not_found(void) {
+    RDContext* ctx = rdtest_context_create();
+    rdtest_assert(ctx, "failed to create test context");
+    _mk_point(ctx);
 
     RDType t;
     rdtest_assert_true(rd_type_init(&t, "Point", 0, RD_TYPE_NONE, ctx));
 
-    // public API: the wrapper owns initialization. A caller passing a
-    // dirty result struct must get identical answers to a {0} caller
-    // (depth is an accumulator, it must never inherit garbage)
-    RDResolveResult dirty;
-    memset(&dirty, 0xAA, sizeof(dirty));
+    RDResolveResultSlice s = rd_type_resolve_chain(ctx, &t, 100);
+    rdtest_assert_eq(s.length, 0);
 
-    rdtest_assert_true(rd_type_resolve_offset(ctx, &t, 0, 0, &dirty));
-    rdtest_assert_streq(dirty.field.name, "x");
-    rdtest_assert_eq(dirty.depth, 0);
-    rdtest_assert(!dirty.item_idx.has_value, "stale item_idx leaked through");
+    rd_destroy(ctx);
+    return RDTEST_PASS;
+}
+
+static int test_type_resolve_chain_count_one_is_array(void) {
+    RDContext* ctx = rdtest_context_create();
+    rdtest_assert(ctx, "failed to create test context");
+    _mk_point(ctx);
+
+    RDType arr1;
+    rdtest_assert_true(rd_type_init(&arr1, "Point", 1, RD_TYPE_NONE, ctx));
+
+    RDResolveResultSlice s = rd_type_resolve_chain(ctx, &arr1, 0);
+    rdtest_assert_eq(s.length, 2);
+    rdtest_assert_true(s.data[0].item_idx.has_value); // the array WAS crossed
+    rdtest_assert_eq(s.data[0].item_idx.value, 0);
 
     rd_destroy(ctx);
     return RDTEST_PASS;
 }
 
 // ===========================================================================
-// The coincidence-chain walk: the renderer's exact access pattern
-// (mirrors items.c's _rd_data_chain_row: probe at floor 0 to find the
-// chain's start, then probe.depth + k for link k, until depth < requested)
+// Buffer contract
 // ===========================================================================
 
-static int test_type_resolve_offset_chain_walk(void) {
+static int test_type_resolve_chain_is_cleared(void) {
     RDContext* ctx = rdtest_context_create();
     rdtest_assert(ctx, "failed to create test context");
-
-    /* Point11 again. The chains this test walks, one head address each:
-     *
-     *  off 0 (root):  [first, x]      both start at byte 0 with Point11
-     *  off 4 (y):     [y]             chain of ONE, at depth 1 (!), the
-     *                                 case where row ordinal != depth
-     *  off 8 (items): [items, [0], x] field, element, member: one byte
-     */
-    // clang-format off
-    RDTypeDef* point = rd_typedef_create_struct("Point", ctx);
-    rdtest_assert_true(rd_typedef_add_member(point, "u32", "x", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_add_member(point, "u32", "y", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_register(point, ctx));
-
-    RDTypeDef* point11 = rd_typedef_create_struct("Point11", ctx);
-    rdtest_assert_true(rd_typedef_add_member(point11, "Point", "first", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_add_member(point11, "Point", "items", 10, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_register(point11, ctx));
-    // clang-format on
+    _mk_point11(ctx);
 
     RDType root;
     rdtest_assert_true(rd_type_init(&root, "Point11", 0, RD_TYPE_NONE, ctx));
 
-    // --- off 0: probe finds first (d0), link 1 is x (d1), link 2 is gone
-    RDResolveResult probe = {0};
-    rdtest_assert_true(rd_type_resolve_offset(ctx, &root, 0, 0, &probe));
-    rdtest_assert_streq(probe.field.name, "first");
-    rdtest_assert_eq(probe.depth, 0);
+    // a three-entry chain must not leave residue behind a shorter one
+    RDResolveResultSlice deep = rd_type_resolve_chain(ctx, &root, 28);
+    rdtest_assert_eq(deep.length, 3);
 
-    RDResolveResult link1 = {0};
-    rdtest_assert_true(
-        rd_type_resolve_offset(ctx, &root, 0, probe.depth + 1, &link1));
-    rdtest_assert_streq(link1.field.name, "x");
-    rdtest_assert_eq(link1.depth, probe.depth + 1); // link exists
+    RDResolveResultSlice shallow = rd_type_resolve_chain(ctx, &root, 0);
+    rdtest_assert_eq(shallow.length, 2);
 
-    RDResolveResult link2 = {0};
-    rdtest_assert_true(
-        rd_type_resolve_offset(ctx, &root, 0, probe.depth + 2, &link2));
-    rdtest_assert(link2.depth < probe.depth + 2, "chain must end after x");
-
-    // --- off 4: the chain is [y] alone, and it lives at depth 1.
-    // This asymmetry (first row of the address, depth != 0) is the exact
-    // shape that must render as one correctly-indented row, then exhaust
-    RDResolveResult py = {0};
-    rdtest_assert_true(rd_type_resolve_offset(ctx, &root, 4, 0, &py));
-    rdtest_assert_streq(py.field.name, "y");
-    rdtest_assert_eq(py.depth, 1); // NOT 0: reached through first@rel!=0
-
-    RDResolveResult py1 = {0};
-    rdtest_assert_true(
-        rd_type_resolve_offset(ctx, &root, 4, py.depth + 1, &py1));
-    rdtest_assert(py1.depth < py.depth + 1, "y is the whole chain");
-
-    // --- off 8: field -> element -> member, three entities on one byte
-    usize off_items = rd_typedef_size(point);
-
-    RDResolveResult pi = {0};
-    rdtest_assert_true(rd_type_resolve_offset(ctx, &root, off_items, 0, &pi));
-    rdtest_assert_streq(pi.field.name, "items");
-    rdtest_assert_eq(pi.depth, 0);
-    rdtest_assert(!pi.item_idx.has_value, "stopped ABOVE the array");
-
-    RDResolveResult pe = {0};
-    rdtest_assert_true(
-        rd_type_resolve_offset(ctx, &root, off_items, pi.depth + 1, &pe));
-    rdtest_assert(pe.field.name == NULL, "elements are unnamed");
-    rdtest_assert_streq(rd_typedef_name(pe.field.type.def), "Point");
-    rdtest_assert_eq(pe.item_idx.value, 0);
-    rdtest_assert_eq(pe.depth, pi.depth + 1);
-
-    RDResolveResult px = {0};
-    rdtest_assert_true(
-        rd_type_resolve_offset(ctx, &root, off_items, pi.depth + 2, &px));
-    rdtest_assert_streq(px.field.name, "x");
-    rdtest_assert_eq(px.depth, pi.depth + 2);
-
-    RDResolveResult pend = {0};
-    rdtest_assert_true(
-        rd_type_resolve_offset(ctx, &root, off_items, pi.depth + 3, &pend));
-    rdtest_assert(pend.depth < pi.depth + 3, "chain ends at [0].x");
+    // and a failure leaves nothing readable
+    RDResolveResultSlice bad = rd_type_resolve_chain(ctx, &root, 9999);
+    rdtest_assert_eq(bad.length, 0);
 
     rd_destroy(ctx);
     return RDTEST_PASS;
 }
 
-static int test_type_resolve_offset_enum_is_solid(void) {
+// ===========================================================================
+// The renderer's access pattern: rows come from at_offset entries only
+// ===========================================================================
+
+static int test_type_resolve_chain_renderer_filter(void) {
     RDContext* ctx = rdtest_context_create();
     rdtest_assert(ctx, "failed to create test context");
-
-    // the contract names four solid kinds: primitive, pointer, union, enum.
-    // The first three have tests; this is the fourth. An enum occupies its
-    // base type's bytes but has no interior, cases are values, not fields
-    RDTypeDef* color = rd_typedef_create_enum("Color", "u32", ctx);
-    rdtest_assert(color, "failed to create enum");
-    rdtest_assert_true(rd_typedef_add_enumval(color, "RED", 0, ctx));
-    rdtest_assert_true(rd_typedef_add_enumval(color, "GREEN", 1, ctx));
-    rdtest_assert_true(rd_typedef_register(color, ctx));
-
-    RDType t;
-    rdtest_assert_true(rd_type_init(&t, "Color", 0, RD_TYPE_NONE, ctx));
-
-    RDResolveResult r = {0};
-    rdtest_assert_true(rd_type_resolve_offset(ctx, &t, 0, RD_MAX_DEPTH, &r));
-    rdtest_assert_streq(rd_typedef_name(r.field.type.def), "Color");
-    rdtest_assert_eq(r.depth, 0);
-
-    // an offset inside the enum's bytes is malformed, same as a primitive
-    RDResolveResult bad = {0};
-    rdtest_assert_false(rd_type_resolve_offset(ctx, &t, 2, 0, &bad));
-
-    rd_destroy(ctx);
-    return RDTEST_PASS;
-}
-
-static int test_type_resolve_offset_string_is_solid(void) {
-    RDContext* ctx = rdtest_context_create();
-    rdtest_assert(ctx, "failed to create test context");
-
-    // THE one special case: char[n] / char16[n] are string literals -
-    // solid for enumeration (never expanded into element rows), while
-    // explicit offsets inside them still resolve. Modeled after
-    // IMAGE_IMPORT_BY_NAME { u16 Hint; char Name[12]; }
-    // clang-format off
-    RDTypeDef* ibn = rd_typedef_create_struct("ImportByName", ctx);
-    rdtest_assert_true(rd_typedef_add_member(ibn, "u16", "Hint", 0, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_add_member(ibn, "char", "Name", 12, RD_TYPE_NONE, ctx));
-    rdtest_assert_true(rd_typedef_register(ibn, ctx));
-    // clang-format on
+    _mk_point11(ctx);
 
     RDType root;
-    rdtest_assert_true(
-        rd_type_init(&root, "ImportByName", 0, RD_TYPE_NONE, ctx));
+    rdtest_assert_true(rd_type_init(&root, "Point11", 0, RD_TYPE_NONE, ctx));
 
-    // forcing past the string member stops AT the string member: the
-    // named field is the honest terminus, never an anonymous char [0]
-    RDResolveResult r = {0};
-    rdtest_assert_true(
-        rd_type_resolve_offset(ctx, &root, sizeof(u16), RD_MAX_DEPTH, &r));
-    rdtest_assert_streq(r.field.name, "Name");
-    rdtest_assert_eq(r.depth, 0);
-    rdtest_assert(!r.item_idx.has_value, "never entered the string");
+    // off 0: two rows (first, x), both start here
+    RDResolveResultSlice s = rd_type_resolve_chain(ctx, &root, 0);
+    usize rows = 0;
+    for(usize i = 0; i < s.length; i++)
+        if(s.data[i].at_offset) rows++;
+    rdtest_assert_eq(rows, 2);
 
-    // ...but containment still resolves: an explicit offset inside the
-    // string yields its element (expansion declined, resolution intact)
-    RDType str;
-    rdtest_assert_true(rd_type_init(&str, "char", 12, RD_TYPE_NONE, ctx));
+    // off 4: one row (y), `first` began elsewhere
+    s = rd_type_resolve_chain(ctx, &root, 4);
+    rows = 0;
+    for(usize i = 0; i < s.length; i++)
+        if(s.data[i].at_offset) rows++;
+    rdtest_assert_eq(rows, 1);
 
-    RDResolveResult re = {0};
-    rdtest_assert_true(rd_type_resolve_offset(ctx, &str, 5, 0, &re));
-    rdtest_assert_eq(re.item_idx.value, 5);
-    rdtest_assert_eq(re.depth, 0);
-
-    // enumeration past the string root exhausts honestly
-    RDResolveResult rx = {0};
-    rdtest_assert_true(rd_type_resolve_offset(ctx, &str, 0, 1, &rx));
-    rdtest_assert_eq(rx.depth, 0); // 0 < 1: nothing enumerable inside
+    // off 28: one row (y), items and element 2 both began elsewhere
+    s = rd_type_resolve_chain(ctx, &root, 28);
+    rows = 0;
+    for(usize i = 0; i < s.length; i++)
+        if(s.data[i].at_offset) rows++;
+    rdtest_assert_eq(rows, 1);
 
     rd_destroy(ctx);
     return RDTEST_PASS;
@@ -1014,24 +653,19 @@ static const RDTest K_TESTS[] = {
     {"pointer_size_consistency", test_pointer_size_consistency},
     {"typedef_resolve_offset_shallow", test_typedef_resolve_offset_shallow},
     {"typedef_resolve_offset_union_rejected", test_typedef_resolve_offset_union_rejected},
-    {"type_resolve_offset_coincidence", test_type_resolve_offset_coincidence},
-    {"type_resolve_offset_min_depth", test_type_resolve_offset_min_depth},
-    {"type_resolve_offset_deep_nested", test_type_resolve_offset_deep_nested},
-    {"type_resolve_offset_array", test_type_resolve_offset_array},
-    {"type_resolve_offset_array_of_pointers", test_type_resolve_offset_array_of_pointers},
-    {"type_resolve_offset_pointer_terminal", test_type_resolve_offset_pointer_terminal},
-    {"type_resolve_offset_primitive_leaf", test_type_resolve_offset_primitive_leaf},
-    {"type_resolve_offset_not_found", test_type_resolve_offset_not_found},
-    {"type_resolve_offset_exhaustion_scalar", test_type_resolve_offset_exhaustion_scalar},
-    {"type_resolve_offset_exhaustion_struct", test_type_resolve_offset_exhaustion_struct},
-    {"type_resolve_offset_exhaustion_array", test_type_resolve_offset_exhaustion_array},
-    {"type_resolve_offset_array_bounds", test_type_resolve_offset_array_bounds},
-    {"type_resolve_offset_count_one_is_array", test_type_resolve_offset_count_one_is_array},
-    {"type_resolve_offset_union_is_opaque", test_type_resolve_offset_union_is_opaque},
-    {"type_resolve_offset_enum_is_solid", test_type_resolve_offset_enum_is_solid},
-    {"type_resolve_offset_string_is_solid", test_type_resolve_offset_string_is_solid},
-    {"type_resolve_offset_result_is_zeroed", test_type_resolve_offset_result_is_zeroed},
-    {"type_resolve_offset_chain_walk", test_type_resolve_offset_chain_walk},
+    {"type_resolve_chain_coincidence", test_type_resolve_chain_coincidence},
+    {"type_resolve_chain_passthrough", test_type_resolve_chain_passthrough},
+    {"type_resolve_chain_array_passthrough", test_type_resolve_chain_array_passthrough},
+    {"type_resolve_chain_element_head", test_type_resolve_chain_element_head},
+    {"type_resolve_chain_primitive_leaf", test_type_resolve_chain_primitive_leaf},
+    {"type_resolve_chain_pointer_terminal", test_type_resolve_chain_pointer_terminal},
+    {"type_resolve_chain_union_is_opaque", test_type_resolve_chain_union_is_opaque},
+    {"type_resolve_chain_string_is_solid", test_type_resolve_chain_string_is_solid},
+    {"type_resolve_chain_array_bounds", test_type_resolve_chain_array_bounds},
+    {"type_resolve_chain_not_found", test_type_resolve_chain_not_found},
+    {"type_resolve_chain_count_one_is_array", test_type_resolve_chain_count_one_is_array},
+    {"type_resolve_chain_is_cleared", test_type_resolve_chain_is_cleared},
+    {"type_resolve_chain_renderer_filter", test_type_resolve_chain_renderer_filter},
     {NULL, NULL},
 };
 // clang-format on
