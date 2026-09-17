@@ -44,10 +44,10 @@ static void _rdtest_on_function_hook(RDContext* ctx, const RDHookEvent* e,
            e->func.index != state->pending_index)
             state->n_violations++;
 
-        RDAddressSlice functions = rd_get_all_functions_address(ctx);
+        RDFunctionSlice functions = rd_get_all_functions(ctx);
         if(state->pending_index >= rd_slice_length(functions) ||
-           rd_slice_at(functions, state->pending_index) !=
-               state->pending_address)
+           rd_function_get_address(rd_slice_at(
+               functions, state->pending_index)) != state->pending_address)
             state->n_violations++;
 
         state->open_add = false;
@@ -71,10 +71,10 @@ static void _rdtest_on_function_hook(RDContext* ctx, const RDHookEvent* e,
            e->func.index != state->pending_index)
             state->n_violations++;
 
-        RDAddressSlice functions = rd_get_all_functions_address(ctx);
+        RDFunctionSlice functions = rd_get_all_functions(ctx);
         if(state->pending_index < rd_slice_length(functions) &&
-           rd_slice_at(functions, state->pending_index) ==
-               state->pending_address)
+           rd_function_get_address(rd_slice_at(
+               functions, state->pending_index)) == state->pending_address)
             state->n_violations++; // still present after "removed"
 
         state->open_remove = false;
@@ -172,11 +172,6 @@ static int _rdtest_run(RDTestSample* sample) {
         rdtest_assert_notnull(f);
         rdtest_assert_eq(rd_function_is_noret(f), sample->entry_point.no_ret);
     }
-
-    RDFunctionSlice functions = rd_get_all_functions(sample->ctx);
-    RDAddressSlice f_addresses = rd_get_all_functions_address(sample->ctx);
-    rdtest_assert_eq(rd_slice_length(functions), rd_slice_length(f_addresses));
-    rdtest_assert_eq(rd_slice_length(f_addresses), sample->n_functions);
 
     rdtest_assert_pass(rdtest_check_names(sample->ctx, sample->names));
     rdtest_assert_pass(rdtest_check_types(sample->ctx, sample->types));
@@ -478,7 +473,7 @@ int rdtest_check_sample(RDTestSample* sample) {
         rdtest_assert_true(
             _rdtest_check_hook_pairing(&hookstate, sample->rel_path));
 
-        RDAddressSlice functions = rd_get_all_functions_address(sample->ctx);
+        RDFunctionSlice functions = rd_get_all_functions(sample->ctx);
         rdtest_assert_eq(hookstate.n_added - hookstate.n_removed,
                          rd_slice_length(functions));
     }
