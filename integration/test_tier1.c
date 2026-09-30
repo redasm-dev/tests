@@ -19,13 +19,16 @@ static int test_helloworld32(void) {
 
     static const RDTestType TYPES[] = {
         {0x080484c0, .name = "char", .count = 12},
+        {0x08049ffc, .name = "u32"},
+        {0x0804a00c, .name = "u32"},
+        {0x0804a010, .name = "u32"},
         {0},
     };
 
     static const RDTestGraph GRAPHS[] = {
         {0x80482A8, 0x33BD2DB1},
-        {0x80482E0, 0x65A596BB},
-        {0x80482F0, 0x199AAC8E},
+        {0x80482E0, 0x5E454A23},
+        {0x80482F0, 0x8BF42326},
         {0x8048300, 0xDD75C1A3},
         {0x8048310, 0xE0E47C8A},
         {0x8048340, 0x63E3DE89},
@@ -41,6 +44,9 @@ static int test_helloworld32(void) {
         {0x8048440, {.address = 0x8048320, .type = RD_DR_ADDRESS}},
         {0x80484a0, {.address = 0x804831b, .type = RD_DR_ADDRESS}},
         {0x80484c0, {.address = 0x804841f, .type = RD_DR_ADDRESS}},
+        {0x8049ffc, {.address = 0x8048300, .type = RD_DR_READ}},
+        {0x804a00c, {.address = 0x80482e0, .type = RD_DR_READ}},
+        {0x804a010, {.address = 0x80482f0, .type = RD_DR_READ}},
         {0},
     };
 
@@ -94,12 +100,15 @@ static int test_helloworld32_stripped(void) {
 
     static const RDTestType TYPES[] = {
         {0x080484c0, .name = "char", .count = 12},
+        {0x08049ffc, .name = "u32"},
+        {0x0804a00c, .name = "u32"},
+        {0x0804a010, .name = "u32"},
         {0},
     };
 
     static const RDTestGraph GRAPHS[] = {
-        {0x80482A8, 0x33BD2DB1}, {0x80482E0, 0x65A596BB},
-        {0x80482F0, 0x199AAC8E}, {0x8048300, 0xDD75C1A3},
+        {0x80482A8, 0x33BD2DB1}, {0x80482E0, 0x5E454A23},
+        {0x80482F0, 0x8BF42326}, {0x8048300, 0xDD75C1A3},
         {0x8048310, 0xE0E47C8A}, {0x8048340, 0x63E3DE89},
         {0x804840B, 0x9368989D}, {0x8048440, 0x9E96B840},
         {0x80484A0, 0xD8579EFA}, {0},
@@ -110,6 +119,9 @@ static int test_helloworld32_stripped(void) {
         {0x8048440, {.address = 0x8048320, .type = RD_DR_ADDRESS}},
         {0x80484a0, {.address = 0x804831b, .type = RD_DR_ADDRESS}},
         {0x80484c0, {.address = 0x804841f, .type = RD_DR_ADDRESS}},
+        {0x8049ffc, {.address = 0x8048300, .type = RD_DR_READ}},
+        {0x804a00c, {.address = 0x80482e0, .type = RD_DR_READ}},
+        {0x804a010, {.address = 0x80482f0, .type = RD_DR_READ}},
         {0},
     };
 
@@ -150,11 +162,14 @@ static int test_helloworld64(void) {
 
     static const RDTestType TYPES[] = {
         {0x400594, .name = "char", .count = 12},
+        {0x600ff0, .name = "u64"},
+        {0x600ff8, .name = "u64"},
+        {0x601018, .name = "u64"},
         {0},
     };
 
     static const RDTestGraph GRAPHS[] = {
-        {0x4003C8, 0xA2B99143}, {0x4003F0, 0xE0B9108C},
+        {0x4003C8, 0xA2B99143}, {0x4003F0, 0x7BF4B093},
         {0x400400, 0x13922C05}, {0x4004F6, 0xF606FA76},
         {0x400510, 0x1AC2741A}, {0x400580, 0x98A4E5},
         {0x400584, 0xB5FD9D9B}, {0},
@@ -165,6 +180,9 @@ static int test_helloworld64(void) {
         {0x400510, {.address = 0x400416, .type = RD_DR_ADDRESS}},
         {0x400580, {.address = 0x40040f, .type = RD_DR_ADDRESS}},
         {0x400594, {.address = 0x4004fa, .type = RD_DR_ADDRESS}},
+        {0x600ff0, {.address = 0x400424, .type = RD_DR_READ}},
+        {0x600ff8, {.address = 0x4003cc, .type = RD_DR_READ}},
+        {0x601018, {.address = 0x4003f0, .type = RD_DR_READ}},
         {0},
     };
 
