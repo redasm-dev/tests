@@ -483,6 +483,9 @@ int rdtest_check_sample(RDTestSample* sample) {
     rd_disassemble(sample->ctx);
     rdtest_assert_pass(_rdtest_run(sample));
 
+    // save problems count
+    usize n_problems = rd_slice_length(rd_get_all_problems(sample->ctx));
+
     // run again in project mode
     bool ok = rd_project_save(sample->ctx, RDTEST_PROJECT_FILE);
     rdtest_assert_true(ok);
@@ -502,6 +505,9 @@ int rdtest_check_sample(RDTestSample* sample) {
     rdtest_assert_true(rd_reanalyze(sample->ctx));
     rd_disassemble(sample->ctx);
     rdtest_assert_pass(_rdtest_run(sample));
+
+    rdtest_assert_eq(n_problems,
+                     rd_slice_length(rd_get_all_problems(sample->ctx)));
 
     return RDTEST_PASS;
 }
