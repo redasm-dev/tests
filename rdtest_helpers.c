@@ -9,10 +9,6 @@
 #define RDTEST_PROJECT_FILE "project.rdx"
 
 typedef struct RDHookState {
-    bool open_add;
-    bool open_remove;
-    usize pending_index;
-    RDAddress pending_address;
     usize n_added;
     usize n_removed;
     usize n_violations;
@@ -24,72 +20,28 @@ static RDContext* g_context = NULL;
 
 static void _rdtest_on_function_hook(RDContext* ctx, const RDHookEvent* e,
                                      void* userdata) {
+    RD_UNUSED(ctx);
+
     RDHookState* state = userdata;
 
-    if(!strcmp(e->name, "redasm.func_adding")) {
-        if(state->open_add || state->open_remove) state->n_violations++;
-        state->open_add = true;
-        state->pending_index = e->func.index;
-        state->pending_address = e->func.address;
-    }
-    else if(!strcmp(e->name, "redasm.func_added")) {
-        if(!state->open_add) {
-            state->n_violations++;
-            return;
-        }
-
-        // payload self-consistency: same address/index reported at "adding"
-        // and "added" for the same bracket
-        if(e->func.address != state->pending_address ||
-           e->func.index != state->pending_index)
+    if(!strcmp(e->name, "redasm.func_added")) {
+        // already declared when the hook fires
+        if(!rd_function_get_type_def(ctx, e->addr.address))
             state->n_violations++;
 
-        RDFunctionSlice functions = rd_get_all_functions(ctx);
-        if(state->pending_index >= rd_slice_length(functions) ||
-           rd_function_get_address(rd_slice_at(
-               functions, state->pending_index)) != state->pending_address)
-            state->n_violations++;
-
-        state->open_add = false;
         state->n_added++;
     }
-    else if(!strcmp(e->name, "redasm.func_removing")) {
-        if(state->open_add || state->open_remove) state->n_violations++;
-        state->open_remove = true;
-        state->pending_index = e->func.index;
-        state->pending_address = e->func.address;
-    }
     else if(!strcmp(e->name, "redasm.func_removed")) {
-        if(!state->open_remove) {
-            state->n_violations++;
-            return;
-        }
-
-        // payload self-consistency: same address/index reported at "removing"
-        // and "removing" for the same bracket
-        if(e->func.address != state->pending_address ||
-           e->func.index != state->pending_index)
+        // already gone when the hook fires
+        if(rd_function_get_type_def(ctx, e->addr.address))
             state->n_violations++;
 
-        RDFunctionSlice functions = rd_get_all_functions(ctx);
-        if(state->pending_index < rd_slice_length(functions) &&
-           rd_function_get_address(rd_slice_at(
-               functions, state->pending_index)) == state->pending_address)
-            state->n_violations++; // still present after "removed"
-
-        state->open_remove = false;
         state->n_removed++;
     }
 }
 
-static bool _rdtest_check_hook_pairing(const RDHookState* state,
-                                       const char* rel_path) {
-    if(state->open_add || state->open_remove) {
-        fprintf(stderr, "  TEST FAIL [%s]: dangling function hook bracket\n",
-                rel_path);
-        return false;
-    }
-
+static bool _rdtest_check_function_hooks(const RDHookState* state,
+                                         const char* rel_path) {
     if(state->n_violations) {
         fprintf(stderr,
                 "  TEST FAIL [%s]: %zu function hook pairing violations\n",
@@ -130,15 +82,17 @@ static void _rdtest_load_plugins() {
 
 static int _rdtest_check_graph(RDContext* ctx, RDAddress address,
                                u32 expected_hash) {
-    const RDFunction* f = rd_find_function(ctx, address);
+    RDFunctionGraph* g = rd_functiongraph_create(ctx);
 
-    if(!f) {
+    if(!rd_functiongraph_populate(g, address)) {
         fprintf(stderr, "  TEST FAIL no function at 0x%08" PRIX64 "\n",
                 address);
+        rd_functiongraph_destroy(g);
         return RDTEST_FAIL;
     }
 
-    u32 hash = rd_function_get_hash(f);
+    u32 hash = rd_functiongraph_get_hash(g);
+    rd_functiongraph_destroy(g);
 
     if(hash != expected_hash) {
         fprintf(stderr,
@@ -167,10 +121,12 @@ static int _rdtest_run(RDTestSample* sample) {
             return RDTEST_FAIL;
         }
 
-        const RDFunction* f =
-            rd_find_function(sample->ctx, sample->entry_point.value);
-        rdtest_assert_notnull(f);
-        rdtest_assert_eq(rd_function_is_noret(f), sample->entry_point.no_ret);
+        // clang-format off
+        RDAddress func_entry;
+        rdtest_assert_true(rd_function_find(sample->ctx, sample->entry_point.value, &func_entry));
+        rdtest_assert_eq(sample->entry_point.value, func_entry);
+        rdtest_assert_eq(rd_function_is_noret(sample->ctx, sample->entry_point.value), sample->entry_point.no_ret);
+        // clang-format on
     }
 
     rdtest_assert_pass(rdtest_check_names(sample->ctx, sample->names));
@@ -282,33 +238,14 @@ int rdtest_check_names(RDContext* ctx, const RDTestName* names) {
         }
 
         if(n->proto) {
-            const RDFunction* f = rd_find_function(ctx, n->address);
+            const RDTypeDef* tdef = rd_function_get_type_def(ctx, n->address);
 
-            if(!f) {
+            if(!tdef) {
                 fprintf(stderr,
                         "  TEST FAIL name '%s' at 0x%08" PRIX64
                         " is not a function\n",
                         name ? name : "(null)", n->address);
 
-                return RDTEST_FAIL;
-            }
-
-            const RDTypeDef* tdef = rd_function_get_type(f);
-
-            if(!tdef) {
-                fprintf(stderr,
-                        "  TEST FAIL name '%s' at 0x%08" PRIX64
-                        ": not type set\n",
-                        name ? name : "(null)", n->address);
-
-                return RDTEST_FAIL;
-            }
-
-            if(rd_typedef_kind(tdef) != RD_TKIND_FUNC) {
-                fprintf(stderr,
-                        "  TEST FAIL name '%s' at 0x%08" PRIX64
-                        ": typedef is not a function\n",
-                        name ? name : "(null)", n->address);
                 return RDTEST_FAIL;
             }
 
@@ -456,13 +393,9 @@ int rdtest_check_sample(RDTestSample* sample) {
     RDHookState hookstate = {0};
 
     if(!sample->skip_pairing) {
-        rd_register_hook(sample->ctx, RD_HOOK_FUNC, "redasm.func_adding",
+        rd_register_hook(sample->ctx, RD_HOOK_ADDRESS, "redasm.func_added",
                          &_rdtest_on_function_hook, &hookstate);
-        rd_register_hook(sample->ctx, RD_HOOK_FUNC, "redasm.func_added",
-                         &_rdtest_on_function_hook, &hookstate);
-        rd_register_hook(sample->ctx, RD_HOOK_FUNC, "redasm.func_removing",
-                         &_rdtest_on_function_hook, &hookstate);
-        rd_register_hook(sample->ctx, RD_HOOK_FUNC, "redasm.func_removed",
+        rd_register_hook(sample->ctx, RD_HOOK_ADDRESS, "redasm.func_removed",
                          &_rdtest_on_function_hook, &hookstate);
     }
 
@@ -471,9 +404,9 @@ int rdtest_check_sample(RDTestSample* sample) {
 
     if(!sample->skip_pairing) {
         rdtest_assert_true(
-            _rdtest_check_hook_pairing(&hookstate, sample->rel_path));
+            _rdtest_check_function_hooks(&hookstate, sample->rel_path));
 
-        RDFunctionSlice functions = rd_get_all_functions(sample->ctx);
+        RDAddressSlice functions = rd_get_all_functions(sample->ctx);
         rdtest_assert_eq(hookstate.n_added - hookstate.n_removed,
                          rd_slice_length(functions));
     }
