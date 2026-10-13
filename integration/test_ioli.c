@@ -97,7 +97,7 @@ static int test_0x00_linux(void) {
         .graphs = GRAPHS,
         .xrefs = XREFS,
         .externals = EXTERNALS,
-        .n_functions = 15,
+        .n_functions = 17,
     };
 
     rdtest_assert_pass(rdtest_check_sample(&s));
