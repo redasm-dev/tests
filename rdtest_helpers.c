@@ -80,8 +80,8 @@ static void _rdtest_load_plugins() {
     }
 }
 
-static int _rdtest_check_graph(RDContext* ctx, RDAddress address,
-                               u32 expected_hash) {
+static int _rdtest_check_funcgraph(RDContext* ctx, RDAddress address,
+                                   u32 expected_hash) {
     RDFunctionGraph* g = rd_functiongraph_create(ctx);
 
     if(!rd_functiongraph_populate(g, address)) {
@@ -97,6 +97,31 @@ static int _rdtest_check_graph(RDContext* ctx, RDAddress address,
     if(hash != expected_hash) {
         fprintf(stderr,
                 "  TEST FAIL graph hash mismatch at 0x%08" PRIX64
+                ": expected 0x%08x, got 0x%08x\n",
+                address, expected_hash, hash);
+        return RDTEST_FAIL;
+    }
+
+    return RDTEST_PASS;
+}
+
+static int _rdtest_check_callgraph(RDContext* ctx, RDAddress address,
+                                   u32 expected_hash) {
+    RDCallGraph* cg = rd_callgraph_create(ctx, address);
+
+    if(!cg) {
+        fprintf(stderr,
+                "  TEST FAIL no function for callgraph at 0x%08" PRIX64 "\n",
+                address);
+        return RDTEST_FAIL;
+    }
+
+    u32 hash = rd_callgraph_get_hash(cg);
+    rd_callgraph_destroy(cg);
+
+    if(hash != expected_hash) {
+        fprintf(stderr,
+                "  TEST FAIL callgraph hash mismatch at 0x%08" PRIX64
                 ": expected 0x%08x, got 0x%08x\n",
                 address, expected_hash, hash);
         return RDTEST_FAIL;
@@ -323,9 +348,17 @@ int rdtest_check_types(RDContext* ctx, const RDTestType* types) {
 int rdtest_check_graphs(RDContext* ctx, const RDTestGraph* graphs) {
     const RDTestGraph* g = graphs;
 
-    while(g && g->hash) {
-        if(_rdtest_check_graph(ctx, g->address, g->hash) != RDTEST_PASS)
+    while(g && (g->funchash || g->callhash)) {
+        if(g->funchash && _rdtest_check_funcgraph(ctx, g->address,
+                                                  g->funchash) != RDTEST_PASS) {
             return RDTEST_FAIL;
+        }
+
+        if(g->callhash && _rdtest_check_callgraph(ctx, g->address,
+                                                  g->callhash) != RDTEST_PASS) {
+            return RDTEST_FAIL;
+        }
+
         g++;
     }
 

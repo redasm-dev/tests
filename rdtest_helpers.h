@@ -6,7 +6,8 @@
 
 typedef struct RDTestGraph {
     RDAddress address;
-    u32 hash;
+    u32 funchash;
+    u32 callhash;
 } RDTestGraph;
 
 typedef struct RDTestName {
