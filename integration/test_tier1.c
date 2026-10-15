@@ -10,10 +10,15 @@ static int test_helloworld32(void) {
         {0x8048300, "imp___gmon_start__"},
         {0x8048310, "_start"},
         {0x8048340, "__x86.get_pc_thunk.bx"},
+        {0x8048350, "deregister_tm_clones"},
+        {0x8048380, "register_tm_clones"},
+        {0x80483C0, "__do_global_dtors_aux"},
+        {0x80483E0, "frame_dummy"},
         {0x804840B, "main"},
         {0x8048440, "__libc_csu_init"},
         {0x80484A0, "__libc_csu_fini"},
         {0x80484A4, "_fini"},
+        {0x804A018, "__dso_handle"},
         {0},
     };
 
@@ -32,6 +37,10 @@ static int test_helloworld32(void) {
         {0x8048300, 0x685EDE30, 0xD326FF87},
         {0x8048310, 0x9636FB11, 0xB67B2771},
         {0x8048340, 0xAE3BEEB7, 0x3B81623F},
+        {0x8048350, 0x7FEC99CE, 0xD786631C},
+        {0x8048380, 0xBDEB2F43, 0x6C4D5F86},
+        {0x80483C0, 0x52AFC439, 0xD786631C},
+        {0x80483E0, 0xEEC78E2A, 0x5B04D8E3},
         {0x804840B, 0x569C0344, 0x1BF9C8DB},
         {0x8048440, 0xB06BA52E, 0x66E7171D},
         {0x80484A0, 0x1C881747, 0x75439731},
@@ -54,14 +63,13 @@ static int test_helloworld32(void) {
     static const RDTestExternal EXTERNALS[] = {
         {.kind = RD_EXT_EXPORTED, .address = 0x80482A8, .name = "_init"},
         {.kind = RD_EXT_EXPORTED, .address = 0x8048310, .name = "_start"},
-        {.kind = RD_EXT_EXPORTED, .address = 0x8048340, .name = "__x86.get_pc_thunk.bx"},
         {.kind = RD_EXT_EXPORTED, .address = 0x804840B, .name = "main"},
         {.kind = RD_EXT_EXPORTED, .address = 0x8048440, .name = "__libc_csu_init"},
         {.kind = RD_EXT_EXPORTED, .address = 0x80484A0, .name = "__libc_csu_fini"},
         {.kind = RD_EXT_EXPORTED, .address = 0x80484A4, .name = "_fini"},
         {.kind = RD_EXT_EXPORTED, .address = 0x80484B8, .name = "_fp_hw"},
         {.kind = RD_EXT_EXPORTED, .address = 0x80484BC, .name = "_IO_stdin_used"},
-        {.kind = RD_EXT_EXPORTED, .address = 0x804A018, .name = "__dso_handle"},
+        {.kind = RD_EXT_EXPORTED, .address = 0x804A014, .name = "__data_start"},
         {.kind = RD_EXT_EXPORTED, .address = 0x804A01C, .name = "__TMC_END__"},
         {.kind = RD_EXT_IMPORTED, .address = 0x8049FFC, .name = "__gmon_start__"},
         {.kind = RD_EXT_IMPORTED, .address = 0x804A00C, .name = "puts"},
@@ -79,7 +87,7 @@ static int test_helloworld32(void) {
         .types = TYPES,
         .graphs = GRAPHS,
         .externals = EXTERNALS,
-        .n_functions = 10,
+        .n_functions = 14,
     };
 
     rdtest_assert_pass(rdtest_check_sample(&s));
@@ -159,10 +167,19 @@ static int test_helloworld32_stripped(void) {
 
 static int test_helloworld64(void) {
     static const RDTestName NAMES[] = {
-        {0x4003c8, "_init"},           {0x4003f0, "imp_puts"},
-        {0x400400, "_start"},          {0x4004f6, "main"},
-        {0x400510, "__libc_csu_init"}, {0x400580, "__libc_csu_fini"},
-        {0x400584, "_fini"},           {0},
+        {0x4003C8, "_init"},
+        {0x4003F0, "imp_puts"},
+        {0x400400, "_start"},
+        {0x400430, "deregister_tm_clones"},
+        {0x400470, "register_tm_clones"},
+        {0x4004B0, "__do_global_dtors_aux"},
+        {0x4004D0, "frame_dummy"},
+        {0x4004F6, "main"},
+        {0x400510, "__libc_csu_init"},
+        {0x400580, "__libc_csu_fini"},
+        {0x400584, "_fini"},
+        {0x601028, "__dso_handle"},
+        {0},
     };
 
     static const RDTestType TYPES[] = {
@@ -175,7 +192,9 @@ static int test_helloworld64(void) {
 
     static const RDTestGraph GRAPHS[] = {
         {0x4003C8, 0x52C091F1, 0x89956CB5}, {0x4003F0, 0xBA03333E, 0xE3E0A29D},
-        {0x400400, 0x58564A71, 0xB194F88D}, {0x4004F6, 0x32A761F9, 0xE3E0A29D},
+        {0x400400, 0x58564A71, 0xB194F88D}, {0x400430, 0x3C7A6C1E, 0x871A8BD0},
+        {0x400470, 0xD0A3A7F, 0x3D6CAF5},   {0x4004B0, 0xFAE1FF8D, 0x871A8BD0},
+        {0x4004D0, 0x41DB944F, 0xC797E03D}, {0x4004F6, 0x32A761F9, 0xE3E0A29D},
         {0x400510, 0xFCAECB1B, 0x89956CB5}, {0x400580, 0xBE37D5D2, 0x882BD5F8},
         {0x400584, 0x9C8AB612, 0x8E18BA72}, {0},
     };
@@ -200,7 +219,7 @@ static int test_helloworld64(void) {
         {.kind = RD_EXT_EXPORTED, .address = 0x400580, .name = "__libc_csu_fini"},
         {.kind = RD_EXT_EXPORTED, .address = 0x400584, .name = "_fini"},
         {.kind = RD_EXT_EXPORTED, .address = 0x400590, .name = "_IO_stdin_used"},
-        {.kind = RD_EXT_EXPORTED, .address = 0x601028, .name = "__dso_handle"},
+        {.kind = RD_EXT_EXPORTED, .address = 0x601020, .name = "__data_start"},
         {.kind = RD_EXT_EXPORTED, .address = 0x601030, .name = "__TMC_END__"},
         {.kind = RD_EXT_IMPORTED, .address = 0x600ff0, .name = "__libc_start_main"},
         {.kind = RD_EXT_IMPORTED, .address = 0x600ff8, .name = "__gmon_start__"},
@@ -219,7 +238,7 @@ static int test_helloworld64(void) {
         .graphs = GRAPHS,
         .xrefs = XREFS,
         .externals = EXTERNALS,
-        .n_functions = 7,
+        .n_functions = 11,
     };
 
     rdtest_assert_pass(rdtest_check_sample(&s));
