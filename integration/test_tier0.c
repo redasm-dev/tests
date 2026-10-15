@@ -233,6 +233,165 @@ static int test_cm01(void) {
     return RDTEST_PASS;
 }
 
+static int test_shared_code(void) {
+    static const RDTestName NAMES[] = {
+        {0x8049000, "_start"},
+        {0x804903B, "p1_prev"},
+        {0x8049047, "p1_a"},
+        {0x8049050, "p1_b"},
+        {0x804905B, "p2_common"},
+        {0x804906E, "p2_alt1"},
+        {0x8049077, "p2_alt2"},
+        {0x8049081, "p3_x"},
+        {0x804908C, "p3_y"},
+        {0x804909C, "p4_big_a"},
+        {0x80490AE, "p4_big_b"},
+        {0x8049046, "p1_prev.shared_ret"},
+        {0x804906D, "p2_body.done"},
+        {0x804908B, "p3_x.shared_ret"},
+        {0x80490AD, "p4_big_a.out"},
+        {0x80490BA, "p4_body.loop"},
+        {0x80490D4, "p4_body.done"},
+        {0x804A000, "var"},
+        {0},
+    };
+
+    static const RDTestType TYPES[] = {
+        {0x804A000, .name = "u32"},
+        {0},
+    };
+
+    static const RDTestGraph GRAPHS[] = {
+        {0x8049000, 0xCF0BE68D, 0x914EB453},
+        {0x804903B, 0x85EEC338, 0xFBA3E531},
+        {0x8049047, 0x8FFBDCC8, 0x485C6EB5},
+        {0x8049050, 0x2F7F5A8D, 0x12B70C59},
+        {0x804905B, 0x85C4A5D8, 0xA903B789},
+        {0x804906E, 0xD87C0686, 0x8E22825C},
+        {0x8049077, 0xB3A46430, 0x49AB0DA6},
+        {0x8049081, 0x27DDA5F2, 0x425DAEDD},
+        {0x804908C, 0xB7C05D5, 0x6D434E89},
+        {0x804909C, 0xB4C0E8E0, 0xDE3226F5},
+        {0x80490AE, 0x497E394F, 0x6DB6810F},
+        {0},
+    };
+
+    static const RDTestXRef XREFS[] = {
+        {0x804903B, {.address = 0x8049000, .type = RD_CR_CALL}},
+        {0x8049047, {.address = 0x8049005, .type = RD_CR_CALL}},
+        {0x8049050, {.address = 0x804900A, .type = RD_CR_CALL}},
+        {0x804905B, {.address = 0x804900F, .type = RD_CR_CALL}},
+        {0x804906E, {.address = 0x8049014, .type = RD_CR_CALL}},
+        {0x8049077, {.address = 0x8049019, .type = RD_CR_CALL}},
+        {0x8049081, {.address = 0x804901E, .type = RD_CR_CALL}},
+        {0x804908C, {.address = 0x8049023, .type = RD_CR_CALL}},
+        {0x804909C, {.address = 0x8049028, .type = RD_CR_CALL}},
+        {0x80490AE, {.address = 0x804902D, .type = RD_CR_CALL}},
+        {0x8049046, {.address = 0x804904E, .type = RD_CR_JUMP}},
+        {0x804905D, {.address = 0x8049075, .type = RD_CR_JUMP}},
+        {0x804905D, {.address = 0x804907E, .type = RD_CR_JUMP}},
+        {0x804906D, {.address = 0x8049064, .type = RD_CR_JUMP}},
+        {0x804908B, {.address = 0x8049093, .type = RD_CR_JUMP}},
+        {0x80490AD, {.address = 0x80490A4, .type = RD_CR_JUMP}},
+        {0x804A000, {.address = 0x804903B, .type = RD_DR_READ}},
+        {0x804A000, {.address = 0x8049041, .type = RD_DR_READ}},
+        {0x804A000, {.address = 0x8049047, .type = RD_DR_READ}},
+        {0x804A000, {.address = 0x8049050, .type = RD_DR_READ}},
+        {0x804A000, {.address = 0x804905D, .type = RD_DR_READ}},
+        {0x804A000, {.address = 0x8049068, .type = RD_DR_READ}},
+        {0x804A000, {.address = 0x8049086, .type = RD_DR_READ}},
+        {0x804A000, {.address = 0x804908C, .type = RD_DR_READ}},
+        {0x804A000, {.address = 0x8049096, .type = RD_DR_READ}},
+        {0x804A000, {.address = 0x804909C, .type = RD_DR_READ}},
+        {0x804A000, {.address = 0x80490BF, .type = RD_DR_READ}},
+        {0x804A000, {.address = 0x80490CA, .type = RD_DR_READ}},
+        {0},
+    };
+
+    RDTestSample s = {
+        .rel_path = "elf/shared_code",
+        .loader_id = "elf",
+        .processor_id = "x86_32",
+        .entry_point = {.value = 0x8049000, .has_value = true},
+        .names = NAMES,
+        .types = TYPES,
+        .graphs = GRAPHS,
+        .xrefs = XREFS,
+        .n_functions = 11,
+    };
+
+    rdtest_assert_pass(rdtest_check_sample(&s));
+    return RDTEST_PASS;
+}
+
+static int test_shared_code_stripped(void) {
+    static const RDTestType TYPES[] = {
+        {0x804A000, .name = "u32"},
+        {0},
+    };
+
+    static const RDTestGraph GRAPHS[] = {
+        {0x8049000, 0xCF0BE68D, 0xE3AC28B5},
+        {0x804903B, 0x85EEC338, 0x74524A7E},
+        {0x8049047, 0x8FFBDCC8, 0x4F3BECCD},
+        {0x8049050, 0x2F7F5A8D, 0xC395271C},
+        {0x804905B, 0x85C4A5D8, 0xABF48BB3},
+        {0x804906E, 0xD87C0686, 0xF0C6CB94},
+        {0x8049077, 0xB3A46430, 0x61D54BDA},
+        {0x8049081, 0x27DDA5F2, 0x190A1A18},
+        {0x804908C, 0xB7C05D5, 0xE4D36374},
+        {0x804909C, 0xB4C0E8E0, 0xD548111C},
+        {0x80490AE, 0x497E394F, 0xF68DC592},
+        {0},
+    };
+
+    static const RDTestXRef XREFS[] = {
+        {0x804903B, {.address = 0x8049000, .type = RD_CR_CALL}},
+        {0x8049047, {.address = 0x8049005, .type = RD_CR_CALL}},
+        {0x8049050, {.address = 0x804900A, .type = RD_CR_CALL}},
+        {0x804905B, {.address = 0x804900F, .type = RD_CR_CALL}},
+        {0x804906E, {.address = 0x8049014, .type = RD_CR_CALL}},
+        {0x8049077, {.address = 0x8049019, .type = RD_CR_CALL}},
+        {0x8049081, {.address = 0x804901E, .type = RD_CR_CALL}},
+        {0x804908C, {.address = 0x8049023, .type = RD_CR_CALL}},
+        {0x804909C, {.address = 0x8049028, .type = RD_CR_CALL}},
+        {0x80490AE, {.address = 0x804902D, .type = RD_CR_CALL}},
+        {0x8049046, {.address = 0x804904E, .type = RD_CR_JUMP}},
+        {0x804905D, {.address = 0x8049075, .type = RD_CR_JUMP}},
+        {0x804905D, {.address = 0x804907E, .type = RD_CR_JUMP}},
+        {0x804906D, {.address = 0x8049064, .type = RD_CR_JUMP}},
+        {0x804908B, {.address = 0x8049093, .type = RD_CR_JUMP}},
+        {0x80490AD, {.address = 0x80490A4, .type = RD_CR_JUMP}},
+        {0x804A000, {.address = 0x804903B, .type = RD_DR_READ}},
+        {0x804A000, {.address = 0x8049041, .type = RD_DR_READ}},
+        {0x804A000, {.address = 0x8049047, .type = RD_DR_READ}},
+        {0x804A000, {.address = 0x8049050, .type = RD_DR_READ}},
+        {0x804A000, {.address = 0x804905D, .type = RD_DR_READ}},
+        {0x804A000, {.address = 0x8049068, .type = RD_DR_READ}},
+        {0x804A000, {.address = 0x8049086, .type = RD_DR_READ}},
+        {0x804A000, {.address = 0x804908C, .type = RD_DR_READ}},
+        {0x804A000, {.address = 0x8049096, .type = RD_DR_READ}},
+        {0x804A000, {.address = 0x804909C, .type = RD_DR_READ}},
+        {0x804A000, {.address = 0x80490BF, .type = RD_DR_READ}},
+        {0x804A000, {.address = 0x80490CA, .type = RD_DR_READ}},
+        {0},
+    };
+
+    RDTestSample s = {
+        .rel_path = "elf/shared_code_stripped",
+        .loader_id = "elf",
+        .processor_id = "x86_32",
+        .entry_point = {.value = 0x8049000, .has_value = true},
+        .types = TYPES,
+        .graphs = GRAPHS,
+        .xrefs = XREFS,
+        .n_functions = 11,
+    };
+
+    rdtest_assert_pass(rdtest_check_sample(&s));
+    return RDTEST_PASS;
+}
+
 static int test_testfwd(void) {
     static const RDTestName NAMES[] = {
         {0x10001000, "NormalExport"},
@@ -315,6 +474,8 @@ static int test_com_hello(void) {
 static const RDTest K_TESTS[] = {
     {"test_masm0", test_masm0},
     {"test_cm01", test_cm01},
+    {"test_shared_code", test_shared_code},
+    {"test_shared_code_stripped", test_shared_code_stripped},
     {"test_testfwd", test_testfwd},
     {"test_com_hello", test_com_hello},
     {NULL, NULL},
