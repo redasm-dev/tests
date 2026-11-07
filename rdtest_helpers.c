@@ -18,7 +18,7 @@ static const char RDTEST_BUFFER[RDTEST_BUFFER_SIZE] = {0};
 static const char* g_samples_dir = NULL;
 static RDContext* g_context = NULL;
 
-static void _rdtest_on_function_hook(RDContext* ctx, const RDHookEvent* e,
+static bool _rdtest_on_function_hook(RDContext* ctx, const RDHookEvent* e,
                                      void* userdata) {
     RD_UNUSED(ctx);
 
@@ -38,6 +38,8 @@ static void _rdtest_on_function_hook(RDContext* ctx, const RDHookEvent* e,
 
         state->n_removed++;
     }
+
+    return true;
 }
 
 static bool _rdtest_check_function_hooks(const RDHookState* state,
