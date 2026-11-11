@@ -439,7 +439,7 @@ int rdtest_check_sample(RDTestSample* sample) {
                          &_rdtest_on_function_hook, &hookstate);
     }
 
-    rd_disassemble(sample->ctx);
+    rd_run(sample->ctx);
     rdtest_assert_pass(_rdtest_run(sample));
 
     if(!sample->skip_pairing) {
@@ -453,7 +453,7 @@ int rdtest_check_sample(RDTestSample* sample) {
 
     // immediate re-analysis shouldn't mutate anything
     rdtest_assert_true(rd_reanalyze(sample->ctx));
-    rd_disassemble(sample->ctx);
+    rd_run(sample->ctx);
     rdtest_assert_pass(_rdtest_run(sample));
 
     // save problems count
@@ -477,7 +477,7 @@ int rdtest_check_sample(RDTestSample* sample) {
 
     // re-analysis after project load shouldn't mutate anything
     rdtest_assert_true(rd_reanalyze(sample->ctx));
-    rd_disassemble(sample->ctx);
+    rd_run(sample->ctx);
     rdtest_assert_pass(_rdtest_run(sample));
 
     rdtest_assert_eq(n_problems, rd_slice_length(rd_get_all_problems(
